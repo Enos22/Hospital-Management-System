@@ -62,3 +62,16 @@ class Signup(Resource):
             db.session.rollback()
             return {"errors": [str(exc)]}, 422
 
+class Login(Resource):
+    def post(self):
+        data = request.get_json(silent =True) or {}
+        user = User.query.filter_by(username=data.get("username")).first()
+        password = data.get("password")
+
+        if user and password and  user.authenticated(password):
+            token = create_access_token(
+                identity = str(user.id),
+                additional_claims = {"role": user.role}
+            )
+            return {**user_schema.dump(user), "access_token": token},
+        return {"errors": ["Invalid Username or Password"]}, 401
