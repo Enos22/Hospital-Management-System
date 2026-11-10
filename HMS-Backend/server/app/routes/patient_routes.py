@@ -94,3 +94,19 @@ class PatientDetail(Resource):
                 return user_schema.dump(user), 200
         except Exception as e:
             return {"errors": [str(e)]}, 422
+
+    @role_required("admin")
+    def delete(self, id):
+        user = db.session.get(User, id)
+
+        if not user or user.role != "patient":
+            return {"errors": ["Patient Not FoUnd"]}, 404
+        try:
+            db.session.delete(user)
+            db.session.commit()
+            return {}, 204
+        except Exception as e:
+            db.session.rollback()
+            return {"errors": [str(e)]}, 422
+
+        # implement patient deletion via DELETE endpoint
