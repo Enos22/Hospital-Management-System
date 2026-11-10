@@ -42,3 +42,22 @@ class PatientList(Resource):
                 "has_prev": paginated_patients.has_prev
             }
         }, 200
+    @role_required("admin", "patient")
+    def post(self):
+        data = request.get_json(silent=True) or {}
+        username = data.get("username")
+        if not username:
+            return {"errors": ["Username is required"]}, 422
+        
+        if User.query.filter_by(username= username, role="patient").first():
+            return {"errors": ["Username exists"]}, 422
+        try:
+            user = User(username=username, role="patient")
+            user.password_hash = data.get("password", "patient123")
+            db.session.add(user)
+            db.session.commit()
+
+            return user_schema.dump(user), 201
+        except Exception as e:
+            db.session.rollback()
+            return {"errors": [str(e)]}, 422
