@@ -75,3 +75,8 @@ class Login(Resource):
             )
             return {**user_schema.dump(user), "access_token": token},
         return {"errors": ["Invalid Username or Password"]}, 401
+
+class Logout(Resource):
+    def delete(self):
+        # front delets jwt token 
+        return {}, 204
