@@ -80,3 +80,11 @@ class Logout(Resource):
     def delete(self):
         # front delets jwt token 
         return {}, 204
+
+class Checksession(Resource):
+    @jwt_required()
+    def get(self):
+        user = db.session.get(User, get_jwt_identity())
+        if user is None:
+            return {"errors": ["Authentication required"]}, 401
+        return user_schema.dump(user), 200
