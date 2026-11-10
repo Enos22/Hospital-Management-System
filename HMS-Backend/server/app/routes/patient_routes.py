@@ -61,3 +61,12 @@ class PatientList(Resource):
         except Exception as e:
             db.session.rollback()
             return {"errors": [str(e)]}, 422
+
+class PatientDetail(Resource):
+    @role_required("doctor", "admin", "patient")
+    def get(self, id):
+        user = db.session.get(User, id)
+
+        if not user or user.role != "patient":
+            return {"errors": ["Patient Not Found"]}, 404
+        return user_schema.dump(user), 200
