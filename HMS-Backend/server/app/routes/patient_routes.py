@@ -70,3 +70,27 @@ class PatientDetail(Resource):
         if not user or user.role != "patient":
             return {"errors": ["Patient Not Found"]}, 404
         return user_schema.dump(user), 200
+    
+    @role_required("admin", "patient")
+    def patch(self, id):
+        user = db.session.get(User, id)
+
+        if not user or user.role != "patient":
+            return {"errors": ["Patient Not Found"]}, 404
+        
+        data = request.get_json(silent=True) or {}
+        if not data:
+            return {"errors": ["No update data provided"]}, 400
+        try:
+            if "username" in data:
+                user.username = data["username"]
+
+            if "password" in data:
+                user.password_hash = data["password"]
+
+            if "status" in data:
+                user.status = data["status"]
+                db.session.commit()
+                return user_schema.dump(user), 200
+        except Exception as e:
+            return {"errors": [str(e)]}, 422
