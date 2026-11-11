@@ -8,6 +8,7 @@ from schemas.medical_record_schema import (
     medical_records_schema,
 )
 from middleware.role_middleware import role_required
+from services.record_service import RecordService
 
 
 class MedicalRecordList(Resource):
@@ -19,16 +20,8 @@ class MedicalRecordList(Resource):
         patient_id = request.args.get("patient_id", type=int)
         search = request.args.get("search", type=str)
 
-        query = MedicalRecord.query
-
-        if patient_id:
-            query = query.filter_by(patient_id=patient_id)
-
-        if search:
-            query = query.filter(MedicalRecord.diagnosis.ilike(f"%{search}%"))
-
-        paginated = query.order_by(MedicalRecord.created_at.desc()).paginate(
-            page=page, per_page=per_page, error_out=False
+        paginated = RecordService.get_all_records(
+            patient_id=patient_id, search=search, page=page, per_page=per_page
         )
 
         return {
@@ -64,9 +57,11 @@ class MedicalRecordList(Resource):
                 "missing_fields": missing,
             }, 400
 
-        record = medical_record_schema.load(data)
-        db.session.add(record)
-        db.session.commit()
+        # Load/validate data through Marshmallow schema, then pass to service
+        validated_data = medical_record_schema.load(data)
+        
+        # If your schema returns a model instance on load:
+        record = RecordService.create_record(data)
 
         return {
             "message": "Medical record created successfully",
@@ -78,7 +73,7 @@ class MedicalRecordDetail(Resource):
 
     @role_required("doctor", "admin")
     def get(self, record_id):
-        record = db.session.get(MedicalRecord, record_id)
+        record = RecordService.get_record_by_id(record_id)
         if not record:
             return {"message": "Medical record not found"}, 404
 
@@ -86,7 +81,7 @@ class MedicalRecordDetail(Resource):
 
     @role_required("doctor", "admin")
     def patch(self, record_id):
-        record = db.session.get(MedicalRecord, record_id)
+        record = RecordService.get_record_by_id(record_id)
         if not record:
             return {"message": "Medical record not found"}, 404
 
@@ -94,10 +89,11 @@ class MedicalRecordDetail(Resource):
         if not data:
             return {"message": "Please provide details to update"}, 400
 
-        record = medical_record_schema.load(
-            data, instance=record, partial=True
-        )
-        db.session.commit()
+        # Partially load data using marshmallow schema if desired, or pass raw dict
+        updated_data = medical_record_schema.load(data, partial=True)
+        
+        # Using service to apply updates
+        record = RecordService.update_record(record, data)
 
         return {
             "message": "Medical record updated successfully",
@@ -106,12 +102,11 @@ class MedicalRecordDetail(Resource):
 
     @role_required("admin")
     def delete(self, record_id):
-        record = db.session.get(MedicalRecord, record_id)
+        record = RecordService.get_record_by_id(record_id)
         if not record:
             return {"message": "Medical record not found"}, 404
 
-        db.session.delete(record)
-        db.session.commit()
+        RecordService.delete_record(record)
 
         return {"message": "Medical record deleted successfully"}, 200
 
@@ -120,11 +115,7 @@ class PatientMedicalHistory(Resource):
 
     @role_required("doctor", "admin")
     def get(self, patient_id):
-        records = (
-            MedicalRecord.query.filter_by(patient_id=patient_id)
-            .order_by(MedicalRecord.created_at.desc())
-            .all()
-        )
+        records = RecordService.get_patient_history(patient_id)
 
         return {
             "patient_id": patient_id,
