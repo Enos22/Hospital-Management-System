@@ -51,3 +51,18 @@ class DoctorDetail(Resource):
             db.session.commit()
             return user_schema.dump(user), 200
 
+    @role_required("admin")
+    def delete(self, id):
+        user = db.session.get(User, id)
+
+        if not user or user.role != "doctor":
+            return {"errors": ["Doctor not Found"]}, 404
+
+        try:
+            db.session.delete(user)
+            db.session.commit()
+            return{}, 204
+        except Exception as e:
+            db.session.rollback()
+            return {"errors": ["Could not delete Doctor, They may have Active Records to their Account"]}, 409
+        
