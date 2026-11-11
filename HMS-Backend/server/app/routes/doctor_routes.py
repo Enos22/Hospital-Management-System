@@ -30,3 +30,12 @@ class DoctorList(Resource):
             db.session.rollback()
             return {"errors": [str(e)]}, 422
 
+class DoctorDetail(Resource):
+    @role_required("admin", "doctor", "patient")
+    def get(self, id):
+        user = db.session.get(User, id)
+        if not user or user.role != "doctor":
+            return {"errors": ["Doctor not found"]}, 404
+        return user_schema.dump(user), 200
+    
+
