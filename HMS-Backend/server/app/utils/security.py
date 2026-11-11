@@ -2,7 +2,7 @@ from flask_bcrypt import Bcrypt
 
 bcrypt = Bcrypt
 
-def has_password(password):
+def hash_password(password):
     if not password or len(password)< 8:
         raise ValueError("Pasword must be atleast 8 Charcters")
     return bcrypt.generate_password_hash(password).decode('utf-8')
@@ -18,7 +18,7 @@ def password_hash(self):
 
 @password_hash.setter
 def password_hash(self, password):
-    self._password_hash = has_password(password)
+    self._password_hash = hash_password(password)
 
 def authenticate(self, password):
     return verify_password(self._password_hash, password)
