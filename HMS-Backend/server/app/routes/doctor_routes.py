@@ -37,5 +37,16 @@ class DoctorDetail(Resource):
         if not user or user.role != "doctor":
             return {"errors": ["Doctor not found"]}, 404
         return user_schema.dump(user), 200
-    
 
+    @role_required("admin", "patient")
+    def patch(self, id):
+        user = db.session.get(user, id)
+
+        if not user or user.role != "doctor":
+            return {"errors": ["Doctor not Found"]}, 404
+        data = request.get_json(silent=True) or {}
+
+        if "username" in data:
+            username = data["username"]
+            db.session.commit()
+            return user_schema.dump(user), 200
