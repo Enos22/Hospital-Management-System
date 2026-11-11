@@ -1,4 +1,4 @@
-from utils.extensions import db
+from app.extensions import db
 
 class Appointment(db.Model):
     __tablename__ = 'appointments'
@@ -10,8 +10,8 @@ class Appointment(db.Model):
     appointment_time = db.Column(db.Time, nullable=False)
     status = db.Column(db.String(20), nullable=False, default='Scheduled')
 
-    patient = db.relationship('Patient', backref=db.backref('appointments', lazy=True))
-    doctor = db.relationship('Doctor', backref=db.backref('appointments', lazy=True))
-
+    patient = db.relationship('Patient', back_populates='appointments', lazy=True)
+    doctor = db.relationship('Doctor', back_populates='appointments', lazy=True)
+    invoices = db.relationship('Invoice', back_populates='appointment', lazy=True)
     def __repr__(self):
         return f'<Appointment {self.id} - Patient {self.patient_id} - Doctor {self.doctor_id}>'

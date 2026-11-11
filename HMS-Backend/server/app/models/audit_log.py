@@ -1,4 +1,4 @@
-from utils.extensions import db
+from app.extensions import db
 
 class AuditLog(db.Model):
     __tablename__ = 'audit_logs'

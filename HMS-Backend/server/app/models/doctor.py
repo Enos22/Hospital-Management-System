@@ -1,4 +1,4 @@
-from utils.extensions import db
+from app.extensions import db
 
 class Doctor(db.Model):
     __tablename__ = 'doctors'
@@ -11,8 +11,10 @@ class Doctor(db.Model):
     availability_status = db.Column(db.Boolean, nullable=False, default=True)
     license_number = db.Column(db.String(50), nullable=False, unique=True)
 
-    user = db.relationship('User', backref=db.backref('doctor', uselist=False))
-    speciality = db.relationship('Speciality', backref=db.backref('doctors', lazy=True))
-    prescriptions = db.relationship('Prescription', backref='doctor', lazy=True)
+    user = db.relationship('User', back_populates='doctor', uselist=False)
+    speciality = db.relationship('Speciality', back_populates='doctors', lazy=True)
+    appointments = db.relationship('Appointment', back_populates='doctor', lazy=True)
+    prescriptions = db.relationship('Prescription', back_populates='doctor', lazy=True)
+    lab_requests = db.relationship('LabRequest', back_populates='doctor', lazy=True)
     def __repr__(self):
-        return f'<Doctor {self.id} - {self.user.first_name} {self.user.last_name}>'
+        return f'<Doctor {self.id} - {self.user.name} - Speciality {self.speciality.name}>'
