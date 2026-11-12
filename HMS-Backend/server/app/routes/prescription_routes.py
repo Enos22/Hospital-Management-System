@@ -1,7 +1,7 @@
 from flask import request
 from flask_restful import Resource
 
-from app.hamphly.services.prescription_service import PrescriptionService
+from app.services.prescription_service import PrescriptionService
 from app.models.prescription import Prescription
 from app.middleware.role_middleware import role_required
 
