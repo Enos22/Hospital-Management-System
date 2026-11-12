@@ -2,9 +2,13 @@ from flask import request
 from flask_restful import Resource
 from extensions import db
 from sqlalchemy import func
+from sqlalchemy.exc import SQLAlchemyError
 from models.user import User
 from schemas.user_schema import user_schema, users_schema
 from middleware.role_middleware import role_required
+from flask_jwt_extended import get_jwt_identity
+
+AVAILABLE_ROLES = {"doctor", "patient", "admin"}
 
 class AdminDashboard(Resource):
     @role_required("admin")
@@ -42,3 +46,33 @@ class AdminUserList(Resource):
             'pages': pagination.pages,
             "per_page": pagination.per_page,
         }, 200
+
+class AdminUserDetail(Resource):
+    @role_required("admin")
+    def patch(self, id):
+
+        user =db.session.get(User, id)
+
+        if not  user:
+            return {"errors": ["User not Found"]}, 404
+        
+        data = request.get_json(silent=True) or {}
+        new_role = data.get("role")
+
+        if new_role not in AVAILABLE_ROLES:
+            return {
+                "errors": [f"Invalid Role! Must be one of: {','.join(sorted(AVAILABLE_ROLES))}"]
+            }, 400
+
+        current_user_id = get_jwt_identity()
+
+        if str(user.id) == str(current_user_id) and new_role != "admin":
+            return {"errors": ["You cannot change your own admin role"]}, 403
+        try:
+             user.role = data["role"]
+             db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return {"errors": ["Database error while updating the user"]}, 500           
+            
+        return user_schema.dump(user), 200
