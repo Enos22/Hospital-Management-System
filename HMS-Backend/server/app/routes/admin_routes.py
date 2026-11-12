@@ -76,3 +76,25 @@ class AdminUserDetail(Resource):
             return {"errors": ["Database error while updating the user"]}, 500           
             
         return user_schema.dump(user), 200
+
+    @role_required("admin")
+    def delete(self, id: int):
+        user = db.session.get(User, id)
+
+        if not user:
+            return {"errors": ["User Not Found"]}, 404
+
+        current_user_id = get_jwt_identity()
+        if str(user.id) == str(current_user_id):
+            return {"errors":["You cannot delete your own account"]}, 403
+
+        try:
+            db.session.delete(user)
+            db.session.commit()
+
+        except SQLAlchemyError:
+            db.session.rollback()
+           
+            return {"errors":["Database error deleting user"]}, 500
+
+        return {}, 204
