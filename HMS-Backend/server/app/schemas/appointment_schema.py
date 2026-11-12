@@ -36,3 +36,6 @@ class AppointmentSchema(SQLAlchemyAutoSchema):
     def validate_doctor_id(self, value):
         if not value:
             raise ValidationError("Doctor ID is required.")
+
+appointment_schema = AppointmentSchema()
+appointments_schema = AppointmentSchema(many=True)
