@@ -1,7 +1,7 @@
 from flask import request
 from flask_restful import Resource
 
-from app.hamphly.services.laboratory_test_service import LaboratoryTestService
+from app.services.laboratory_test_service import LaboratoryTestService
 from app.middleware.role_middleware import role_required
 
 
