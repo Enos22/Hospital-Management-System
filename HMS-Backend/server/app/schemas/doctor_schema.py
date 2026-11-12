@@ -44,3 +44,7 @@ class DoctorSchema(SQLAlchemyAutoSchema):
             raise ValidationError("Phone number is required.")
         if len(value) < 10:
             raise ValidationError("Phone number must be at least 10 digits long.")
+
+
+doctor_schema = DoctorSchema()
+doctors_schema = DoctorSchema(many=True)
