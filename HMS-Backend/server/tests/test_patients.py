@@ -5,6 +5,23 @@ from app.models.user import User
 from app.models.patient import Patient
 
 
+def test_patient_profile_is_owner_scoped(client, make_user, token_for):
+    patient_user, _ = make_user("patient", username="profile-owner")
+    other_user, _ = make_user("patient", username="profile-other")
+
+    own = client.get(
+        f"/api/patients/{patient_user.id}",
+        headers={"Authorization": f"Bearer {token_for(patient_user)}"},
+    )
+    assert own.status_code == 200
+
+    denied = client.get(
+        f"/api/patients/{patient_user.id}",
+        headers={"Authorization": f"Bearer {token_for(other_user)}"},
+    )
+    assert denied.status_code == 403
+
+
 def test_create_patient(app):
     with app.app_context():
 

@@ -11,7 +11,7 @@ class UserSchema(SQLAlchemyAutoSchema):
         exclude = ("password_hash",)
 
     username = fields.String(required=True, validate=validate.Length(min=3))
-    role = fields.String(validate=validate.OneOf(["doctor", "patient", "admin"]))
+    role = fields.String(validate=validate.OneOf(["doctor", "patient", "admin", "billing"]))
     password = fields.String(required=True, load_only=True, validate=validate.Length(min=8))
     pasword_confirmation =fields.String(required=True,load_only=True)
 

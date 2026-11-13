@@ -1,21 +1,31 @@
 from flask import request
+from flask_jwt_extended import get_jwt, jwt_required
 from flask_restful import Resource
 
 from app.services.prescription_service import PrescriptionService
 from app.models.prescription import Prescription
 from app.middleware.role_middleware import role_required
+from app.utils.permissions import can_access_patient_data, current_patient
 
 
 class PrescriptionList(Resource):
     """Handles listing all prescriptions (with filters and pagination) and creating new prescriptions."""
 
-    @role_required("doctor", "admin")
+    @jwt_required()
     def get(self):
         """Fetch a paginated list of prescriptions, optionally filtered by patient ID or doctor ID."""
         page = request.args.get("page", 1, type=int)
         per_page = request.args.get("per_page", 10, type=int)
         patient_id = request.args.get("patient_id", type=int)
         doctor_id = request.args.get("doctor_id", type=int)
+
+        patient = current_patient()
+        if patient is not None:
+            if patient_id is not None and patient_id != patient.id:
+                return {"message": "You are not allowed to view these prescriptions"}, 403
+            patient_id = patient.id
+        elif get_jwt().get("role") not in {"doctor", "admin"}:
+            return {"message": "You are not allowed to view prescriptions"}, 403
 
         # Retrieve prescriptions through the service layer
         paginated = PrescriptionService.get_all_prescriptions(
@@ -99,7 +109,7 @@ class PrescriptionList(Resource):
 class PrescriptionDetail(Resource):
     """Handles retrieving, updating, and deleting a single prescription by its ID."""
 
-    @role_required("doctor", "admin")
+    @jwt_required()
     def get(self, prescription_id):
         """Fetch a specific prescription using its unique ID."""
         prescription = PrescriptionService.get_prescription_by_id(
@@ -108,6 +118,8 @@ class PrescriptionDetail(Resource):
 
         if not prescription:
             return {"message": "Prescription not found"}, 404
+        if not can_access_patient_data(prescription.patient_id):
+            return {"message": "You are not allowed to view this prescription"}, 403
 
         return {
             "prescription": {

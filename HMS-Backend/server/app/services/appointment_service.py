@@ -1,8 +1,8 @@
 from datetime import datetime
 from app.shared.extensions import db
 from app.nnmodels.appointment import Appointment
-from app.benson.models.patient import Patient
-from app.benson.models.doctor import Doctor
+from app.models.patient import Patient
+from app.models.doctor import Doctor
 from app.antony.services.scheduling_service import SchedulingService
 from app.antony.utils.conflict_checker import check_appointment_conflict
 

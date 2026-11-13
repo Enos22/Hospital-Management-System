@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
+from sqlalchemy import func
 
-from app.benson.models import Invoice, Payment
+from app.models import Invoice, Payment
 
 
 def get_dates(start, end):
@@ -33,20 +34,21 @@ def revenue_report(start=None, end=None):
     invoices = Invoice.query.filter(
         Invoice.issued_at >= start_date,
         Invoice.issued_at < end_date,
-        Invoice.status != "cancelled",
+        func.lower(Invoice.status) != "cancelled",
     ).all()
 
     total_invoiced = 0
     total_outstanding = 0
     for inv in invoices:
         total_invoiced = total_invoiced + inv.total_amount
-        if inv.status in ["unpaid", "partial"]:
+        if inv.status.lower() in ["unpaid", "partial"]:
             total_outstanding = total_outstanding + (inv.total_amount - inv.amount_paid)
 
     # payments received in this period
+    payment_date = func.coalesce(Payment.paid_at, Payment.created_at)
     payments = Payment.query.filter(
-        Payment.paid_at >= start_date,
-        Payment.paid_at < end_date,
+        payment_date >= start_date,
+        payment_date < end_date,
     ).all()
 
     total_collected = 0
@@ -66,9 +68,10 @@ def revenue_report(start=None, end=None):
 def payment_report(start=None, end=None):
     start_date, end_date = get_dates(start, end)
 
+    payment_date = func.coalesce(Payment.paid_at, Payment.created_at)
     payments = Payment.query.filter(
-        Payment.paid_at >= start_date,
-        Payment.paid_at < end_date,
+        payment_date >= start_date,
+        payment_date < end_date,
     ).all()
 
     by_method = {}

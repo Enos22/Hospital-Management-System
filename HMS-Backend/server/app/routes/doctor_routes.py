@@ -64,7 +64,7 @@ class DoctorDetail(Resource):
             return {"errors": ["Doctor not found"]}, 404
         return user_schema.dump(user), 200
 
-    @role_required("admin", "patient")
+    @role_required("admin")
     def patch(self, id):
         user = db.session.get(User, id)
 
@@ -72,10 +72,25 @@ class DoctorDetail(Resource):
             return {"errors": ["Doctor not Found"]}, 404
         data = request.get_json(silent=True) or {}
 
+        updated_fields = {"username", "email"} & data.keys()
+        if not updated_fields:
+            return {"errors": ["No supported fields to update"]}, 400
+
         if "username" in data:
             username = data["username"]
-            db.session.commit()
-            return user_schema.dump(user), 200
+            if not username:
+                return {"errors": ["Username cannot be empty"]}, 400
+            existing = User.query.filter_by(username=username).first()
+            if existing is not None and existing.id != user.id:
+                return {"errors": ["Username already exists"]}, 409
+            user.username = username
+        if "email" in data:
+            email = data["email"]
+            if not email:
+                return {"errors": ["Email cannot be empty"]}, 400
+            user.email = email
+        db.session.commit()
+        return user_schema.dump(user), 200
 
     @role_required("admin")
     def delete(self, id):

@@ -14,7 +14,7 @@ class User(db.Model):
 
     doctor = db.relationship('Doctor', back_populates='user', lazy=True, uselist=False)
     patient = db.relationship('Patient', back_populates='user', lazy=True, uselist=False)
-    payments = db.relationship('Payment', back_populates='user', lazy=True)
+    payments = db.relationship('Payment', back_populates='user', lazy=True, foreign_keys='Payment.user_id')
     notifications = db.relationship('Notification', back_populates='user', lazy=True)
 
     @property

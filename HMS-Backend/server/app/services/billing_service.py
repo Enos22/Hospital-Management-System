@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
+from sqlalchemy import func
 
-from app.shared.extensions import db
-from app.benson.models import Invoice, InvoiceItem, Payment, Patient
+from app.extensions import db
+from app.models import Invoice, InvoiceItem, Payment, Patient
 
 PAYMENT_METHODS = ["cash", "card", "mobile_money", "bank_transfer", "insurance"]
 
@@ -62,6 +63,12 @@ def create_invoice(patient_id, items, tax_rate, discount, created_by):
 
     if not items:
         raise ValueError("Add at least one item")
+
+    try:
+        tax_rate = float(tax_rate)
+        discount = float(discount)
+    except (TypeError, ValueError):
+        raise ValueError("Tax rate and discount must be numbers")
 
     # add up the items
     subtotal = 0
@@ -171,12 +178,14 @@ def record_payment(invoice_id, amount, method, reference, received_by):
         raise ValueError("Amount is more than the balance of " + str(balance))
 
     payment = Payment(
+        user_id=invoice.patient.user_id,
         invoice_id=invoice.id,
         amount=amount,
-        method=method,
+        payment_method=method,
         reference=reference,
         paid_at=datetime.utcnow(),
         received_by=received_by,
+        status="completed",
     )
     db.session.add(payment)
 
@@ -195,14 +204,14 @@ def get_patient_balance(patient_id):
     invoices = Invoice.query.filter_by(patient_id=patient_id).all()
     owed = 0
     for inv in invoices:
-        if inv.status in ["unpaid", "partial"]:
+        if inv.status.lower() in ["unpaid", "partial"]:
             owed = owed + (inv.total_amount - inv.amount_paid)
 
     return {"patient_id": patient_id, "outstanding_balance": round(owed, 2)}
 
 
 def list_outstanding():
-    invoices = Invoice.query.filter(Invoice.status.in_(["unpaid", "partial"])).all()
+    invoices = Invoice.query.filter(func.lower(Invoice.status).in_(["unpaid", "partial"])).all()
 
     result = []
     total = 0

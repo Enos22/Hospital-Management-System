@@ -1,67 +1,41 @@
-AfyaCare Hospital Management System — Backend
-AfyaCare is the backend for a hospital management system. It provides REST APIs for the React client and uses Flask, Flask-SQLAlchemy, and SQLite to manage application data.
-Features
-The backend includes modules for:
-- Patients
-- Doctors
-- Appointments
-- Billing, invoices, and payments
-- User accounts and authentication
-- Request validation with Marshmallow schemas
-Technology
-- Python
-- Flask
-- Flask-SQLAlchemy
-- SQLite
-- Marshmallow
-- Flask-Migrate
-- React client
+# AfyaCare Hospital Management System
 
+AfyaCare is a Flask REST API for core hospital operations: user authentication, patient and doctor directories, appointments, medical records, prescriptions, laboratory requests/results, pharmacy inventory, invoices, payments, reports, and notifications.
 
-PROJECT DIAGRAM
+## Backend setup
 
-![AfyaCare system diagram](diagram.png)
+Use Python 3.12 or newer. Commands below run from `HMS-Backend/server`:
 
-Project structure
-    HMS-Backend/
-    └── server/
-        ├── app/
-        ├── models/
-        ├── routes/
-        ├── schemas/
-        ├── services/
-        ├── migrations/
-        ├── tests/
-        ├── requirements.txt
-        └── run.py
-The exact files and folders may vary as the backend develops.
-Setup
-Run commands from the HMS-Backend/server directory.
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python run.py
+```
 
-Create and activate a virtual environment:
-**python -m venv .venv**
-On Windows PowerShell:
-.\.venv\Scripts\Activate.ps1
-On macOS or Linux:
-**source .venv/bin/activate**
-Install the project dependencies:
-**pip install -r requirements.txt**
-Configuration
-    Set the required environment variables for your local configuration. For example:
-    SECRET_KEY=your-private-secret-key
-    DATABASE_URL=sqlite:///app.db
-Keep private keys out of source control. Check the application configuration for the variable names and defaults used by your checkout.
-## Database migrations
-The backend uses Flask-Migrate to manage database schema changes. From the server directory, use the migration commands configured for the application:
-- flask db migrate -m "Describe the database change"
-- flask db upgrade
-Run the server
-    Start the Flask application using the run command defined by the backend. A common entry point is:
-    **python run.py**
-    The server address and port depend on the application configuration.
-API
-    The backend exposes REST API routes for its implemented modules. Check the route files for the current paths, HTTP methods, required fields, and response formats. Protected routes require the authentication method configured by the application.
-Validation
-    Marshmallow schemas validate and serialize request and response data. Invalid requests should be corrected based on the validation errors returned by the API.
-Frontend
-The React client communicates with the backend over HTTP. Configure the client’s API base URL and the backend’s CORS settings to match the local development ports used by your project.
+The development server listens on `http://127.0.0.1:5555`. The default SQLite database is `instance/afyacare.db`. Set `SECRET_KEY`, `JWT_SECRET_KEY`, and `DATABASE_URL` in the environment to override development defaults. Never use the development secret values in production.
+
+Run the test suite from the same directory:
+
+```bash
+python -m pytest -q
+```
+
+For database migrations, use Flask-Migrate from the server directory:
+
+```bash
+flask --app app:create_app db upgrade
+flask --app app:create_app db migrate -m "Describe the schema change"
+```
+
+## API and data
+
+- API paths, methods, authentication, and request examples: [docs/api_documentation.md](./docs/api_documentation.md)
+- Tables, foreign keys, and relationship overview: [docs/database_design.md](./docs/database_design.md)
+- Deployment and production configuration: [docs/deployment.md](./docs/deployment.md)
+- System architecture: [docs/system_architecture.md](./docs/system_architecture.md)
+- User workflows: [docs/user_manual.md](./docs/user_manual.md)
+- Project scope: [docs/project_proposal.md](./docs/project_proposal.md)
+- Requirements: [docs/requirements.md](./docs/requirements.md)
+
+Routes that expose patient-specific clinical, billing, appointment, or notification data enforce ownership for patient accounts; doctor/admin access is role-gated. Use a valid JWT in the `Authorization: Bearer <token>` header for protected endpoints.

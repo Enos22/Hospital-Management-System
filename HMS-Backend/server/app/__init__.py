@@ -10,10 +10,12 @@ migrate = Migrate()
 jwt = JWTManager()
 
 
-def create_app():
+def create_app(test_config=None):
     app = Flask(__name__)
 
     app.config.from_object("app.config.Config")
+    if test_config:
+        app.config.update(test_config)
     app.config.setdefault("JWT_SECRET_KEY", app.config.get("SECRET_KEY", "dev-secret-key"))
     app.config.setdefault("JWT_TOKEN_LOCATION", ["headers"])
     app.config.setdefault("JWT_HEADER_NAME", "Authorization")
@@ -55,47 +57,52 @@ def create_app():
 
     api = Api(app)
 
-    try:
-        from app.routes.auth_routes import Signup, Login, Logout, Checksession
-        api.add_resource(Signup, "/api/auth/signup")
-        api.add_resource(Login, "/api/auth/login")
-        api.add_resource(Logout, "/api/auth/logout")
-        api.add_resource(Checksession, "/api/auth/checksession")
-    except Exception:
-        pass
+    from app.routes.admin_routes import (
+        AdminDashboard,
+        AdminUserDetail,
+        AdminUserList,
+    )
+    from app.routes.appointment_routes import appointment_bp
+    from app.routes.auth_routes import Checksession, Login, Logout, Signup
+    from app.routes.billing_routes import billing_bp
+    from app.routes.doctor_routes import DoctorDetail, DoctorList
+    from app.routes.laboratory_routes import LaboratoryTestDetail, LaboratoryTestList
+    from app.routes.medical_record_routes import (
+        MedicalRecordDetail,
+        MedicalRecordList,
+        PatientMedicalHistory,
+    )
+    from app.routes.notification_routes import notification_bp
+    from app.routes.patient_routes import PatientDetail, PatientList
+    from app.routes.pharmacy_routes import MedicineDetail, MedicineList
+    from app.routes.prescription_routes import PrescriptionDetail, PrescriptionList
 
-    try:
-        from app.routes.admin_routes import AdminDashboard, AdminUserList, AdminUserDetail
-        api.add_resource(AdminDashboard, "/api/admin/dashboard")
-        api.add_resource(AdminUserList, "/api/admin/users")
-        api.add_resource(AdminUserDetail, "/api/admin/users/<int:id>")
-    except Exception:
-        pass
-
-    try:
-        from app.routes.doctor_routes import DoctorList, DoctorDetail
-        api.add_resource(DoctorList, "/api/doctors")
-        api.add_resource(DoctorDetail, "/api/doctors/<int:id>")
-    except Exception:
-        pass
-
-    try:
-        from app.routes.patient_routes import PatientList, PatientDetail
-        api.add_resource(PatientList, "/api/patients")
-        api.add_resource(PatientDetail, "/api/patients/<int:id>")
-    except Exception:
-        pass
-
-    try:
-        from app.routes.appointment_routes import appointment_bp
-        app.register_blueprint(appointment_bp)
-    except Exception:
-        pass
-
-    try:
-        from app.routes.notification_routes import notification_bp
-        app.register_blueprint(notification_bp)
-    except Exception:
-        pass
+    api.add_resource(Signup, "/api/auth/signup")
+    api.add_resource(Login, "/api/auth/login")
+    api.add_resource(Logout, "/api/auth/logout")
+    api.add_resource(Checksession, "/api/auth/checksession")
+    api.add_resource(AdminDashboard, "/api/admin/dashboard")
+    api.add_resource(AdminUserList, "/api/admin/users")
+    api.add_resource(AdminUserDetail, "/api/admin/users/<int:id>")
+    api.add_resource(DoctorList, "/api/doctors")
+    api.add_resource(DoctorDetail, "/api/doctors/<int:id>")
+    api.add_resource(PatientList, "/api/patients")
+    api.add_resource(PatientDetail, "/api/patients/<int:id>")
+    api.add_resource(MedicineList, "/api/pharmacy/medicines")
+    api.add_resource(MedicineDetail, "/api/pharmacy/medicines/<int:medicine_id>")
+    api.add_resource(LaboratoryTestList, "/api/laboratory/tests")
+    api.add_resource(LaboratoryTestDetail, "/api/laboratory/tests/<int:test_id>")
+    api.add_resource(MedicalRecordList, "/api/medical-records")
+    api.add_resource(MedicalRecordDetail, "/api/medical-records/<int:record_id>")
+    api.add_resource(
+        PatientMedicalHistory, "/api/patients/<int:patient_id>/medical-history"
+    )
+    api.add_resource(PrescriptionList, "/api/prescriptions")
+    api.add_resource(
+        PrescriptionDetail, "/api/prescriptions/<int:prescription_id>"
+    )
+    app.register_blueprint(appointment_bp)
+    app.register_blueprint(billing_bp)
+    app.register_blueprint(notification_bp)
 
     return app

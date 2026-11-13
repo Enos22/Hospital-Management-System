@@ -13,5 +13,16 @@ class Appointment(db.Model):
     patient = db.relationship('Patient', back_populates='appointments', lazy=True)
     doctor = db.relationship('Doctor', back_populates='appointments', lazy=True)
     invoices = db.relationship('Invoice', back_populates='appointment', lazy=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "patient_id": self.patient_id,
+            "doctor_id": self.doctor_id,
+            "appointment_date": self.appointment_date.date().isoformat(),
+            "appointment_time": self.appointment_time.strftime("%H:%M"),
+            "status": self.status,
+        }
+
     def __repr__(self):
         return f'<Appointment {self.id} - Patient {self.patient_id} - Doctor {self.doctor_id}>'

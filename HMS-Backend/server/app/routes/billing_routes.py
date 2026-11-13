@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from app.benson.models import User, Patient
+from app.models import Patient, User
 from ..services import billing_service, report_service, matching_service
 
 billing_bp = Blueprint("billing", __name__)

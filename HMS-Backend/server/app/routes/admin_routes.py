@@ -8,7 +8,7 @@ from app.schemas.user_schema import user_schema, users_schema
 from app.middleware.role_middleware import role_required
 from flask_jwt_extended import get_jwt_identity
 
-AVAILABLE_ROLES = {"doctor", "patient", "admin"}
+AVAILABLE_ROLES = {"doctor", "patient", "admin", "billing"}
 
 class AdminDashboard(Resource):
     @role_required("admin")
@@ -28,17 +28,20 @@ class AdminDashboard(Resource):
 class AdminUserList(Resource):
     @role_required("admin")
     def get(self):
-        page = request.args.get("page", 1, type=int)
-        per_page = min(request.args.get("per-page",20, type=int), 100)
+        page = max(request.args.get("page", 1, type=int), 1)
+        per_page = min(max(request.args.get("per_page", 20, type=int), 1), 100)
         role = request.args.get("role", type=str)
-        
+
+        if role and role not in AVAILABLE_ROLES:
+            return {"errors": ["Invalid role filter"]}, 400
+
         query = User.query
 
         if role:
             query = query.filter_by(role=role)
-            pagination = query.order_by(User.id.desc()).paginate(
-                page=page, per_page=per_page, error_out=False
-            )
+        pagination = query.order_by(User.id.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
         return {
             "users": users_schema.dump(pagination.items),
             "total": pagination.total,

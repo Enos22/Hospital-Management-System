@@ -53,14 +53,21 @@ class SchedulingService:
         slot_duration = timedelta(minutes=schedule["slot_duration_minutes"])
 
         # 3. Fetch existing active appointments for this doctor on this date
+        target_day = datetime.strptime(target_date, "%Y-%m-%d").date()
+        day_start = datetime.combine(target_day, time.min)
+        day_end = day_start + timedelta(days=1)
         booked_appointments = Appointment.query.filter(
             Appointment.doctor_id == doctor_id,
-            Appointment.appointment_date == datetime.strptime(target_date, "%Y-%m-%d").date(),
+            Appointment.appointment_date >= day_start,
+            Appointment.appointment_date < day_end,
             Appointment.status != 'cancelled'
         ).all()
 
         # Extract booked start times as string representations (e.g., "09:30")
-        booked_times = {appt.start_time for appt in booked_appointments}
+        booked_times = {
+            appt.appointment_time.strftime("%H:%M")
+            for appt in booked_appointments
+        }
 
         # 4. Generate all potential slots and filter out booked ones
         available_slots = []

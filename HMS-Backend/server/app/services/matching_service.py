@@ -1,6 +1,7 @@
 from datetime import datetime
 
-from app.benson.models import Doctor, Specialty
+from app.models import Doctor, Speciality
+from app.services.scheduling_service import SchedulingService
 
 
 def find_doctors(specialty, date):
@@ -16,13 +17,7 @@ def find_doctors(specialty, date):
     except ValueError:
         raise ValueError("Date must look like 2026-03-31")
 
-    # Antony's scheduling code tells us the free slots
-    try:
-        from app.antony.services.scheduling_service import get_available_slots
-    except ImportError:
-        raise ValueError("Scheduling service is not ready yet")
-
-    spec = Specialty.query.filter(Specialty.name.ilike(specialty)).first()
+    spec = Speciality.query.filter(Speciality.name.ilike(specialty)).first()
     if spec is None:
         raise LookupError("Specialty not found")
 
@@ -30,7 +25,8 @@ def find_doctors(specialty, date):
 
     matches = []
     for doctor in doctors:
-        slots = get_available_slots(doctor.id, date)
+        schedule = SchedulingService.get_available_time_slots(doctor.id, date)
+        slots = schedule.get("available_slots", [])
         if slots:
             matches.append({
                 "doctor_id": doctor.id,

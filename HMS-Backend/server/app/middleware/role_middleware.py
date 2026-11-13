@@ -1,13 +1,11 @@
 from functools import wraps
-from flask_jwt_extended import verify_jwt_in_request, get_jwt
+from flask_jwt_extended import get_jwt, jwt_required
 
 def role_required(*roles):
     def decorator(fn):
+        @wraps(fn)
+        @jwt_required()
         def wrapper (*args, **kwargs):
-            try:
-                verify_jwt_in_request()
-            except Exception:
-                return {"errors": ["Authentication required"]}, 401
             claims = get_jwt()
             if claims.get("role") not in roles:
                 return {"Forbidden": ["You Dont have Permision"]}, 403
