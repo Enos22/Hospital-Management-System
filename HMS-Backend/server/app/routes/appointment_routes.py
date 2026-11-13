@@ -1,102 +1,117 @@
-from flask import Blueprint, jsonify, request
-from antony.services.appointment_service import AppointmentService
-from antony.utils.validators import validate_appointment_input
-from antony.utils.responses import success_response, error_response
+from datetime import datetime
 
-appointment_bp = Blueprint('appointments', __name__, url_prefix='/api/appointments')
+from flask import Blueprint, request
 
-@appointment_bp.route('', methods=['POST'])
+from app.extensions import db
+from app.models.appointment import Appointment
+from app.utils.conflict_checker import check_appointment_conflict
+from app.utils.responses import error_response, success_response
+
+appointment_bp = Blueprint("appointment_bp", __name__, url_prefix="/api/appointments")
+
+
+@appointment_bp.route("", methods=["POST"])
 def create_appointment():
-    """Create a new appointment[cite: 7]."""
-    data = request.get_json()
-    
-    # Validate input fields, dates, and times
-    validation_error = validate_appointment_input(data)
-    if validation_error:
-        return error_response(message=validation_error, status_code=400)
-    
-    try:
-        new_appointment = AppointmentService.create_appointment(data)
-        return success_response(
-            data=new_appointment.to_dict(), 
-            message="Appointment created successfully", 
-            status_code=201
-        )
-    except ValueError as e:
-        return error_response(message=str(e), status_code=409)  # Conflict/Double-booking prevention error
-    except Exception as e:
-        return error_response(message="An internal error occurred", status_code=500)
+    data = request.get_json(silent=True) or {}
 
-@appointment_bp.route('', methods=['GET'])
+    required_fields = ["patient_id", "doctor_id", "appointment_date", "start_time", "end_time"]
+    missing = [field for field in required_fields if data.get(field) in (None, "")]
+    if missing:
+        return error_response(f"Missing required fields: {', '.join(missing)}", 400)
+
+    try:
+        patient_id = int(data["patient_id"])
+        doctor_id = int(data["doctor_id"])
+        appointment_date = datetime.strptime(data["appointment_date"], "%Y-%m-%d").date()
+        start_time = data["start_time"]
+        end_time = data["end_time"]
+        start_dt = datetime.strptime(start_time, "%H:%M")
+        end_dt = datetime.strptime(end_time, "%H:%M")
+
+        if end_dt <= start_dt:
+            return error_response("End time must be later than start time", 400)
+    except ValueError:
+        return error_response("Invalid appointment date or time", 400)
+
+    duration_minutes = int((end_dt - start_dt).total_seconds() // 60)
+    conflict = check_appointment_conflict(
+        doctor_id=doctor_id,
+        patient_id=patient_id,
+        appointment_date=appointment_date.isoformat(),
+        start_time=start_time,
+        duration_minutes=duration_minutes,
+    )
+
+    if conflict["has_conflict"]:
+        return error_response(conflict["message"], 409)
+
+    appointment = Appointment(
+        patient_id=patient_id,
+        doctor_id=doctor_id,
+        appointment_date=appointment_date,
+        start_time=start_time,
+        end_time=end_time,
+        reason=data.get("reason", ""),
+        status="scheduled",
+    )
+
+    db.session.add(appointment)
+    db.session.commit()
+
+    return success_response({"appointment": appointment.to_dict()}, "Appointment created successfully", 201)
+
+
+@appointment_bp.route("", methods=["GET"])
 def get_appointments():
-    """Retrieve all appointments or filter by patient/doctor[cite: 7]."""
-    patient_id = request.args.get('patient_id')
-    doctor_id = request.args.get('doctor_id')
-    
-    appointments = AppointmentService.get_appointments(patient_id=patient_id, doctor_id=doctor_id)
-    return success_response(data=[apt.to_dict() for apt in appointments], status_code=200)
+    patient_id = request.args.get("patient_id")
+    doctor_id = request.args.get("doctor_id")
+    date = request.args.get("appointment_date")
 
-@appointment_bp.route('/<int:appointment_id>', methods=['GET'])
+    query = Appointment.query
+    if patient_id:
+        query = query.filter_by(patient_id=int(patient_id))
+    if doctor_id:
+        query = query.filter_by(doctor_id=int(doctor_id))
+    if date:
+        query = query.filter_by(appointment_date=datetime.strptime(date, "%Y-%m-%d").date())
+
+    appointments = query.order_by(Appointment.created_at.desc()).all()
+    return success_response([item.to_dict() for item in appointments], "Appointments retrieved successfully", 200)
+
+
+@appointment_bp.route("/<int:appointment_id>", methods=["GET"])
 def get_appointment(appointment_id):
-    """Retrieve a specific appointment by ID[cite: 7]."""
-    appointment = AppointmentService.get_appointment_by_id(appointment_id)
+    appointment = Appointment.query.get(appointment_id)
     if not appointment:
-        return error_response(message="Appointment not found", status_code=404)
-        
-    return success_response(data=appointment.to_dict(), status_code=200)
+        return error_response("Appointment not found", 404)
 
-@appointment_bp.route('/<int:appointment_id>', methods=['PUT'])
+    return success_response({"appointment": appointment.to_dict()}, "Appointment retrieved successfully", 200)
+
+
+@appointment_bp.route("/<int:appointment_id>", methods=["PUT"])
 def update_appointment(appointment_id):
-    """Update appointment details[cite: 7]."""
-    data = request.get_json()
-    
-    try:
-        updated_appointment = AppointmentService.update_appointment(appointment_id, data)
-        if not updated_appointment:
-            return error_response(message="Appointment not found", status_code=404)
-            
-        return success_response(
-            data=updated_appointment.to_dict(), 
-            message="Appointment updated successfully", 
-            status_code=200
-        )
-    except ValueError as e:
-        return error_response(message=str(e), status_code=400)
+    appointment = Appointment.query.get(appointment_id)
+    if not appointment:
+        return error_response("Appointment not found", 404)
 
-@appointment_bp.route('/<int:appointment_id>/reschedule', methods=['PATCH'])
-def reschedule_appointment(appointment_id):
-    """Reschedule an existing appointment[cite: 7]."""
-    data = request.get_json()
-    new_date = data.get('date')
-    new_time = data.get('time')
-    
-    if not new_date or not new_time:
-        return error_response(message="New date and time are required for rescheduling", status_code=400)
-        
-    try:
-        rescheduled = AppointmentService.reschedule_appointment(appointment_id, new_date, new_time)
-        if not rescheduled:
-            return error_response(message="Appointment not found", status_code=404)
-            
-        return success_response(
-            data=rescheduled.to_dict(), 
-            message="Appointment rescheduled successfully", 
-            status_code=200
-        )
-    except ValueError as e:
-        return error_response(message=str(e), status_code=409)
+    data = request.get_json(silent=True) or {}
+    for field in ["patient_id", "doctor_id", "appointment_date", "start_time", "end_time", "reason", "status"]:
+        if field in data:
+            if field == "appointment_date":
+                appointment.appointment_date = datetime.strptime(data[field], "%Y-%m-%d").date()
+            else:
+                setattr(appointment, field, data[field])
 
-@appointment_bp.route('/<int:appointment_id>/cancel', methods=['PATCH'])
+    db.session.commit()
+    return success_response({"appointment": appointment.to_dict()}, "Appointment updated successfully", 200)
+
+
+@appointment_bp.route("/<int:appointment_id>/cancel", methods=["PATCH"])
 def cancel_appointment(appointment_id):
-    """Cancel an appointment[cite: 7]."""
-    try:
-        cancelled = AppointmentService.cancel_appointment(appointment_id)
-        if not cancelled:
-            return error_response(message="Appointment not found", status_code=404)
-            
-        return success_response(
-            message="Appointment cancelled successfully", 
-            status_code=200
-        )
-    except Exception as e:
-        return error_response(message=str(e), status_code=400)
+    appointment = Appointment.query.get(appointment_id)
+    if not appointment:
+        return error_response("Appointment not found", 404)
+
+    appointment.status = "cancelled"
+    db.session.commit()
+    return success_response({"appointment": appointment.to_dict()}, "Appointment cancelled successfully", 200)
