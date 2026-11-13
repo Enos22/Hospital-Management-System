@@ -1,9 +1,24 @@
 
-from app.extensions import db, bcrypt
 from app import create_app
-from app.extensions import db
-from app.models import User, Patient, Doctor, Speciality, Payment,Prescription,Medicine,Notification, MedicalRecord, LabResult, LabRequest, Appointment, Invoice, AuditLog
-from datetime import datetime, timedelta,date, time
+from app.extensions import db, bcrypt
+from app.models import (
+    Appointment,
+    AuditLog,
+    Doctor,
+    Invoice,
+    InvoiceItem,
+    LabRequest,
+    LabResult,
+    MedicalRecord,
+    Medicine,
+    Notification,
+    Patient,
+    Payment,
+    Prescription,
+    Speciality,
+    User,
+)
+from datetime import date, datetime, time, timedelta
 
 app = create_app()
 
@@ -31,6 +46,12 @@ SEED_USERS = [
         "email": "receptionist@afyacare.com",
         "password": "Reception@123",
         "role": "receptionist",
+    },
+    {
+        "username": "billing",
+        "email": "billing@afyacare.com",
+        "password": "Billing@123",
+        "role": "billing",
     },
 ]
 
@@ -97,37 +118,9 @@ def seed_specialties():
     print("Specialties seeded successfully!")
 
 def seed_users():
-
-    users_data = [
-        {
-            "username": "admin",
-            "email": "admin@afyacare.com",
-            "password": "Admin@123",
-            "role": "admin"
-        },
-        {
-            "username": "doctor1",
-            "email": "doctor1@afyacare.com",
-            "password": "Doctor@123",
-            "role": "doctor"
-        },
-        {
-            "username": "patient1",
-            "email": "patient1@afyacare.com",
-            "password": "Patient@123",
-            "role": "patient"
-        },
-        {
-            "username": "receptionist",
-            "email": "receptionist@afyacare.com",
-            "password": "Reception@123",
-            "role": "receptionist"
-        }
-    ]
-
     added = 0
 
-    for data in users_data:
+    for data in SEED_USERS:
 
         existing_user = User.query.filter(
             (User.username == data["username"]) |
@@ -157,10 +150,15 @@ def seed_users():
     print(f"Successfully seeded {added} users!")
 
 def create_user(username, email, password, role):
-    email = email.replace(" ", "")
-    user = User.query.filter_by(email=email).first()
-
-    if user:
+    email = email.strip().replace(" ", "")
+    user = User.query.filter(
+        (User.username == username) | (User.email == email)
+    ).first()
+    if user is not None:
+        if user.username != username or user.email != email:
+            raise ValueError(
+                f"Seed user identity conflicts with existing user {user.id}"
+            )
         return user
 
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -181,7 +179,7 @@ def create_user(username, email, password, role):
 
 def seed_admin():
     create_user(
-        username="or",
+        username="admin",
         email="admin@afyacare.com",
         password="Admin12345",
         role="admin"
@@ -193,6 +191,15 @@ def seed_admin():
 
 def seed_doctors():
     doctors = [
+        {
+            "username": "doctor1",
+            "speciality": "General Medicine",
+            "email": "doctor1@afyacare.com",
+            "password_hash": "Doctor@123",
+            "license_number": "DOC000",
+            "qualification": "MBChB",
+            "phone_number": "0700000000"
+        },
         {
             "username": "Mary Wanjiku",
             "speciality_id": 1,
@@ -601,7 +608,7 @@ def seed_lab_results():
         existing = LabResult.query.filter_by(
             patient_id=data["patient_id"],
             test_name=data["test_name"],
-            result_date=data["result_date"]
+            result_value=data["result_value"]
         ).first()
 
         if existing:
@@ -747,8 +754,7 @@ def seed_medical_records():
         # Prevent duplicate records
         existing = MedicalRecord.query.filter_by(
             patient_id=data["patient_id"],
-            diagnosis=data["diagnosis"],
-            record_date=data["record_date"]
+            diagnosis=data["diagnosis"]
         ).first()
 
         if existing:
@@ -851,66 +857,47 @@ def seed_appointments():
     print(f"Successfully seeded {added} appointments!")
 
 def seed_audit_logs():
-    audit_logs = [
-        AuditLog(
-            user_id=1,
-            action="CREATE",
-            table_name="patients",
-            record_id=1,
-            timestamp=datetime.now() - timedelta(days=5)
-        ),
-        AuditLog(
-            user_id=1,
-            action="UPDATE",
-            table_name="patients",
-            record_id=1,
-            timestamp=datetime.now() - timedelta(days=4)
-        ),
-        AuditLog(
-            user_id=2,
-            action="CREATE",
-            table_name="doctors",
-            record_id=1,
-            timestamp=datetime.now() - timedelta(days=3)
-        ),
-        AuditLog(
-            user_id=2,
-            action="DELETE",
-            table_name="appointments",
-            record_id=2,
-            timestamp=datetime.now() - timedelta(days=2)
-        ),
-        AuditLog(
-            user_id=3,
-            action="CREATE",
-            table_name="appointments",
-            record_id=3,
-            timestamp=datetime.now() - timedelta(days=1)
-        ),
-        AuditLog(
-            user_id=1,
-            action="UPDATE",
-            table_name="billing",
-            record_id=1
-        ),
-        AuditLog(
-            user_id=3,
-            action="CREATE",
-            table_name="medical_records",
-            record_id=1
-        ),
-        AuditLog(
-            user_id=2,
-            action="UPDATE",
-            table_name="doctors",
-            record_id=2
-        )
+    admin = User.query.filter_by(email="admin@afyacare.com").first()
+    doctor = Doctor.query.order_by(Doctor.id).first()
+    patient = Patient.query.order_by(Patient.id).first()
+    appointment = Appointment.query.order_by(Appointment.id).first()
+    medical_record = MedicalRecord.query.order_by(MedicalRecord.id).first()
+    invoice = Invoice.query.order_by(Invoice.id).first()
+    if not all((admin, doctor, patient, appointment, medical_record, invoice)):
+        raise RuntimeError("Seed users and workflows before audit logs")
+
+    audit_log_data = [
+        (admin.id, "CREATE", "patients", patient.id),
+        (admin.id, "UPDATE", "patients", patient.id),
+        (admin.id, "CREATE", "doctors", doctor.id),
+        (doctor.user_id, "UPDATE", "appointments", appointment.id),
+        (patient.user_id, "CREATE", "appointments", appointment.id),
+        (admin.id, "UPDATE", "invoices", invoice.id),
+        (doctor.user_id, "CREATE", "medical_records", medical_record.id),
+        (admin.id, "UPDATE", "doctors", doctor.id),
     ]
 
-    db.session.add_all(audit_logs)
+    added = 0
+    for user_id, action, table_name, record_id in audit_log_data:
+        existing = AuditLog.query.filter_by(
+            user_id=user_id,
+            action=action,
+            table_name=table_name,
+            record_id=record_id,
+        ).first()
+        if existing is None:
+            db.session.add(
+                AuditLog(
+                    user_id=user_id,
+                    action=action,
+                    table_name=table_name,
+                    record_id=record_id,
+                )
+            )
+            added += 1
     db.session.commit()
 
-    print("Audit logs seeded successfully!")
+    print(f"Successfully seeded {added} audit logs!")
 
 def seed_invoices():
 
@@ -930,19 +917,25 @@ def seed_invoices():
             "patient_id": appointments[0].patient_id,
             "appointment_id": appointments[0].id,
             "total_amount": 2500.00,
-            "status": "Unpaid"
+            "amount_paid": 0.00,
+            "status": "unpaid",
+            "item_description": "Consultation"
         },
         {
             "patient_id": appointments[1].patient_id,
             "appointment_id": appointments[1].id,
             "total_amount": 5000.00,
-            "status": "Paid"
+            "amount_paid": 5000.00,
+            "status": "paid",
+            "item_description": "Consultation and diagnostics"
         },
         {
             "patient_id": appointments[-1].patient_id,
             "appointment_id": appointments[-1].id,
             "total_amount": 3500.00,
-            "status": "Partially Paid"
+            "amount_paid": 1000.00,
+            "status": "partial",
+            "item_description": "Consultation and laboratory services"
         }
     ]
 
@@ -955,13 +948,54 @@ def seed_invoices():
             appointment_id=data["appointment_id"]
         ).first()
 
-        if existing:
-            continue
+        if existing is None:
+            now = datetime.now()
+            admin = User.query.filter_by(email="admin@afyacare.com").first()
+            invoice = Invoice(
+                patient_id=data["patient_id"],
+                appointment_id=data["appointment_id"],
+                invoice_number=f"INV-SEED-{data['appointment_id']:06d}",
+                subtotal=data["total_amount"],
+                tax_amount=0,
+                discount_amount=0,
+                total_amount=data["total_amount"],
+                amount_paid=data["amount_paid"],
+                status=data["status"],
+                issued_at=now,
+                due_date=(now + timedelta(days=30)).date(),
+                created_by=admin.id if admin else None,
+            )
+            db.session.add(invoice)
+            db.session.flush()
+            existing = invoice
+            added += 1
 
-        invoice = Invoice(**data)
+        if not existing.items:
+            db.session.add(
+                InvoiceItem(
+                    invoice_id=existing.id,
+                    description=data["item_description"],
+                    quantity=1,
+                    unit_price=data["total_amount"],
+                    line_total=data["total_amount"],
+                )
+            )
 
-        db.session.add(invoice)
-        added += 1
+        if data["amount_paid"] > 0 and not Payment.query.filter_by(
+            invoice_id=existing.id
+        ).first():
+            db.session.add(
+                Payment(
+                    user_id=existing.patient.user_id,
+                    invoice_id=existing.id,
+                    amount=data["amount_paid"],
+                    payment_method="cash",
+                    reference=f"SEED-{existing.invoice_number}",
+                    paid_at=existing.issued_at,
+                    received_by=existing.created_by,
+                    status="completed",
+                )
+            )
 
     db.session.commit()
 
@@ -969,6 +1003,16 @@ def seed_invoices():
 
 def seed_patients():
     patients = [
+        {
+            "username": "patient1",
+            "name": "Patient One",
+            "email": "patient1@afyacare.com",
+            "phone_number": "0700000004",
+            "age": 30,
+            "gender": "Other",
+            "address": "Nairobi",
+            "emergency_contact": "0700000005"
+        },
         {
             "name": "John Kamau",
             "email": "john@example.com",
@@ -1002,7 +1046,7 @@ def seed_patients():
 
     for item in patients:
         user = create_user(
-            item["name"],
+            item.get("username", item["name"]),
             item["email"],
             "Patient12345",
             "patient"
@@ -1053,9 +1097,9 @@ def seed_database():
 
             print("\nAfyaCare database seeded successfully!")
 
-        except Exception as error:
+        except Exception:
             db.session.rollback()
-            print("Seeding failed:", error)
+            raise
 
 
 if __name__ == "__main__":
