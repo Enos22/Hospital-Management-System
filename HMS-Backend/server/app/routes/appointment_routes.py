@@ -75,7 +75,7 @@ def get_appointments():
     if date:
         query = query.filter_by(appointment_date=datetime.strptime(date, "%Y-%m-%d").date())
 
-    appointments = query.order_by(Appointment.created_at.desc()).all()
+    appointments = query.order_by(Appointment.id.desc()).all()
     return success_response([item.to_dict() for item in appointments], "Appointments retrieved successfully", 200)
 
 

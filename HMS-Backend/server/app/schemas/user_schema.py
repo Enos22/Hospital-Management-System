@@ -1,14 +1,14 @@
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from marshmallow import fields, validate, validates, ValidationError
-from extensions import db
-from models.user import User
+from app.extensions import db
+from app.models.user import User
 
 class UserSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = User
         sqla_session = db.session
         load_instance = True
-        exclude = ("_password_hash",)
+        exclude = ("password_hash",)
 
     username = fields.String(required=True, validate=validate.Length(min=3))
     role = fields.String(validate=validate.OneOf(["doctor", "patient", "admin"]))

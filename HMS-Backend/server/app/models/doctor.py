@@ -17,4 +17,4 @@ class Doctor(db.Model):
     prescriptions = db.relationship('Prescription', back_populates='doctor', lazy=True)
     lab_requests = db.relationship('LabRequest', back_populates='doctor', lazy=True)
     def __repr__(self):
-        return f'<Doctor {self.id} - {self.user.name} - Speciality {self.speciality.name}>'
+        return f'<Doctor {self.id} - {self.user.username} - Speciality {self.speciality.name}>'

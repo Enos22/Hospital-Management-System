@@ -1,9 +1,9 @@
 from flask import request
 from flask_restful import Resource
-from extensions import db
-from models.user import User
-from schemas.user_schema import user_schema, users_schema
-from middleware.role_middleware import role_required
+from app.extensions import db
+from app.models.user import User
+from app.schemas.user_schema import user_schema, users_schema
+from app.middleware.role_middleware import role_required
 from sqlalchemy import or_
 
 class PatientList(Resource):
@@ -53,7 +53,7 @@ class PatientList(Resource):
             return {"errors": ["Username exists"]}, 422
         try:
             user = User(username=username, role="patient")
-            user.password_hash = data.get("password", "patient123")
+            user.password = data.get("password", "patient123")
             db.session.add(user)
             db.session.commit()
 
@@ -86,7 +86,7 @@ class PatientDetail(Resource):
                 user.username = data["username"]
 
             if "password" in data:
-                user.password_hash = data["password"]
+                user.password = data["password"]
 
             if "status" in data:
                 user.status = data["status"]

@@ -1,11 +1,11 @@
 from flask import request
 from flask_restful import Resource
-from extensions import db
+from app.extensions import db
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
-from models.user import User
-from schemas.user_schema import user_schema, users_schema
-from middleware.role_middleware import role_required
+from app.models.user import User
+from app.schemas.user_schema import user_schema, users_schema
+from app.middleware.role_middleware import role_required
 from flask_jwt_extended import get_jwt_identity
 
 AVAILABLE_ROLES = {"doctor", "patient", "admin"}

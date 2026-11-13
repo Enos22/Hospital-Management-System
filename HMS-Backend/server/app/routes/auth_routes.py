@@ -1,9 +1,9 @@
 from flask import request
 from flask_restful import Resource
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
-from extensions import db
-from models.user import User
-from schemas.user_schema import user_schema
+from app.extensions import db
+from app.models.user import User
+from app.schemas.user_schema import user_schema
 from functools import wraps
 
 def role_required(*roles):
@@ -21,14 +21,18 @@ def role_required(*roles):
 
 class Signup(Resource):
     def post(self):
-        data = request.get_json(silent =True) or {}
+        data = request.get_json(silent=True) or {}
         username = data.get("username")
+        email = data.get("email")
         password = data.get("password")
         confirmation = data.get("password_confirmation")
-        role = data.get("role", "patient") #as dflt
+        role = data.get("role", "patient")
 
         if not username:
             return {"error": ["Username is required"]}, 422
+
+        if not email:
+            return {"error": ["Email is required"]}, 422
 
         if not password:
             return {"error": ["Password is required"]}, 422
@@ -39,26 +43,28 @@ class Signup(Resource):
         if role not in ["doctor", "patient", "admin"]:
             return {"errors": ["Role Must be Doctor, Patient, or Admin"]}, 422
 
-        #adm chek(only admin to creat admin)
         if role == "admin":
             return {"errors": ["You cannot signup as Admin.Reach out to Super Admin for Assistance"]}, 403
 
         if User.query.filter_by(username=username).first():
             return {"error": ["Username already Exists"]}, 422
 
+        if User.query.filter_by(email=email).first():
+            return {"error": ["Email already Exists"]}, 422
+
         try:
-            user = User(username=username, role=role)
-            user.password_hash = password
+            user = User(username=username, email=email, role=role)
+            user.password = password
             db.session.add(user)
             db.session.commit()
 
             token = create_access_token(
-                identity = str(user.id),
-                additional_claims = {"role": user.role}
+                identity=str(user.id),
+                additional_claims={"role": user.role}
             )
-            return {**user_schema.dump(user), "access_token": token},
-        
-        except(ValueError, Exception) as exc:
+            return {**user_schema.dump(user), "access_token": token}, 201
+
+        except (ValueError, Exception) as exc:
             db.session.rollback()
             return {"errors": [str(exc)]}, 422
 
@@ -73,7 +79,7 @@ class Login(Resource):
                 identity = str(user.id),
                 additional_claims = {"role": user.role}
             )
-            return {**user_schema.dump(user), "access_token": token},
+            return {**user_schema.dump(user), "access_token": token}, 200
         return {"errors": ["Invalid Username or Password"]}, 401
 
 class Logout(Resource):

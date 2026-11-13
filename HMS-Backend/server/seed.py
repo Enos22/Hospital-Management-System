@@ -7,6 +7,58 @@ from datetime import datetime, timedelta,date, time
 
 app = create_app()
 
+SEED_USERS = [
+    {
+        "username": "admin",
+        "email": "admin@afyacare.com",
+        "password": "Admin@123",
+        "role": "admin",
+    },
+    {
+        "username": "doctor1",
+        "email": "doctor1@afyacare.com",
+        "password": "Doctor@123",
+        "role": "doctor",
+    },
+    {
+        "username": "patient1",
+        "email": "patient1@afyacare.com",
+        "password": "Patient@123",
+        "role": "patient",
+    },
+    {
+        "username": "receptionist",
+        "email": "receptionist@afyacare.com",
+        "password": "Reception@123",
+        "role": "receptionist",
+    },
+]
+
+
+def seed_data():
+    with app.app_context():
+        users_created = 0
+        for data in SEED_USERS:
+            existing_user = User.query.filter(
+                (User.username == data["username"]) |
+                (User.email == data["email"])
+            ).first()
+            if existing_user:
+                continue
+
+            hashed_password = bcrypt.generate_password_hash(data["password"]).decode("utf-8")
+            user = User(
+                username=data["username"],
+                email=data["email"],
+                password_hash=hashed_password,
+                role=data["role"],
+            )
+            db.session.add(user)
+            users_created += 1
+
+        db.session.commit()
+        return users_created
+
 
 def seed_specialties():
     specialties = [
@@ -49,25 +101,25 @@ def seed_users():
     users_data = [
         {
             "username": "admin",
-            "email": "admin@afy acare.com".replace(" ", ""),
+            "email": "admin@afyacare.com",
             "password": "Admin@123",
             "role": "admin"
         },
         {
             "username": "doctor1",
-            "email": "doctor1@afy acare.com".replace(" ", ""),
+            "email": "doctor1@afyacare.com",
             "password": "Doctor@123",
             "role": "doctor"
         },
         {
             "username": "patient1",
-            "email": "patient1@afy acare.com".replace(" ", ""),
+            "email": "patient1@afyacare.com",
             "password": "Patient@123",
             "role": "patient"
         },
         {
             "username": "receptionist",
-            "email": "receptionist@afy acare.com".replace(" ", ""),
+            "email": "receptionist@afyacare.com",
             "password": "Reception@123",
             "role": "receptionist"
         }
@@ -105,6 +157,7 @@ def seed_users():
     print(f"Successfully seeded {added} users!")
 
 def create_user(username, email, password, role):
+    email = email.replace(" ", "")
     user = User.query.filter_by(email=email).first()
 
     if user:
@@ -129,7 +182,7 @@ def create_user(username, email, password, role):
 def seed_admin():
     create_user(
         username="or",
-        email="admin@afy acare.com",
+        email="admin@afyacare.com",
         password="Admin12345",
         role="admin"
     )
@@ -143,7 +196,7 @@ def seed_doctors():
         {
             "username": "Mary Wanjiku",
             "speciality_id": 1,
-            "email": "mary@afy acare.com",
+            "email": "mary@afyacare.com",
             "password_hash": "Doctor12345",
             "speciality": "Cardiology",
             "license_number": "DOC001",
@@ -153,7 +206,7 @@ def seed_doctors():
         {
             "username": "James Mwangi",
             "speciality_id": 2,
-            "email": "james@afy acare.com",
+            "email": "james@afyacare.com",
             "password_hash": "Doctor12345",
             "speciality": "Pediatrics",
             "license_number": "DOC002",
@@ -163,7 +216,7 @@ def seed_doctors():
         {
             "username": "Grace Achieng",
             "speciality_id": 3,
-            "email": "grace@afy acare.com",
+            "email": "grace@afyacare.com",
             "password_hash": "Doctor12345",
             "speciality": "Dermatology",
             "license_number": "DOC003",
@@ -981,22 +1034,23 @@ def seed_patients():
 def seed_database():
     with app.app_context():
         try:
-            seed_medicines()
-            seed_prescriptions()
+            db.create_all()
             seed_users()
             seed_specialties()
             seed_admin()
             seed_doctors()
             seed_patients()
+            seed_medicines()
             seed_payments()
             seed_notifications()
+            seed_prescriptions()
             seed_medical_records()
             seed_lab_results()
             seed_lab_requests()
-            seed_invoices()
             seed_appointments()
+            seed_invoices()
             seed_audit_logs()
-            
+
             print("\nAfyaCare database seeded successfully!")
 
         except Exception as error:

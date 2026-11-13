@@ -3,10 +3,14 @@
 
 from flask import request
 from flask_restful import Resource
-from extensions import db
-from models.user import User
-from schemas.user_schema import user_schema, users_schema
-from middleware.role_middleware import role_required
+
+from app.extensions import db
+from app.models.doctor import Doctor
+from app.models.speciality import Speciality
+from app.models.user import User
+from app.middleware.role_middleware import role_required
+from app.schemas.user_schema import user_schema, users_schema
+
 
 class DoctorList(Resource):
     @role_required("admin", "doctor", "patient")
@@ -17,12 +21,34 @@ class DoctorList(Resource):
     def post(self):
         data = request.get_json(silent=True) or {}
 
-        if User.query.filter_by(username=data.get("username")).first():
+        username = data.get("username")
+        speciality_id = data.get("speciality_id")
+
+        if not username:
+            return {"errors": ["Username is required"]}, 422
+
+        if User.query.filter_by(username=username).first():
             return {"errors": ["Username Exists"]}, 422
+
+        speciality = Speciality.query.get(speciality_id)
+        if speciality is None:
+            return {"errors": ["Speciality not found"]}, 404
+
         try:
-            user = User(username=data.get("username"), role = "doctor")
-            user.password_hash = data.get("password", "doctor123")
+            user = User(username=username, email=data.get("email", f"{username}@hospital.local"), role="doctor")
+            user.password = data.get("password", "doctor123")
             db.session.add(user)
+            db.session.flush()
+
+            doctor = Doctor(
+                user_id=user.id,
+                speciality_id=speciality.id,
+                qualification=data.get("qualification", "MBChB"),
+                phone_number=data.get("phone_number", "0700000000"),
+                availability_status=True,
+                license_number=data.get("license_number", f"DOC-{user.id:05d}")
+            )
+            db.session.add(doctor)
             db.session.commit()
 
             return user_schema.dump(user), 201
