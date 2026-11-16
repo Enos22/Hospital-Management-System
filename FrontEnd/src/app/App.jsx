@@ -1,8 +1,27 @@
+import Provider from "./providers.jsx"
+import AppRouter from "./router.jsx"
+import { useToast } from "./providers.jsx"
+
+function ToastViewport() {
+  const { toasts } = useToast();
+
+  return (
+    <div className="toast-viewport">
+      {toasts.map((t) => (
+        <div key={t.id} className={`toast toast-${t.type}`} role="status">
+          {t.message}
+        </div>
+      ))}
+
+    </div>
+  );
+}
+
 export default function App() {
   return (
-    <main>
-      <h1>AFYA CARE </h1>
-      <p> SINA KITU, ANZA KAZI NANI!.</p>
-    </main>
+    <Provider>
+      <AppRouter />
+      <ToastViewport />
+    </Provider>
   );
 }
