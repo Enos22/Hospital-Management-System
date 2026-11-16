@@ -35,5 +35,14 @@ export const ROUTES = {
         REPORTS: "/billing/reports"
     },
 
-    export func
-}
+    };
+    
+        export function getLandingForRole(role) {
+        if (role === 'admin') return ROUTES.ADMIN.DASHBOARD;
+        if (role === 'doctor') return ROUTES.DOCTOR.APPOINTMENTS;
+        if (role === 'patient') return ROUTES.PATIENT.HOME;
+        if (role === 'billing') return ROUTES.BILLING.INVOICES;
+
+        return ROUTES.LOGIN
+       
+        }
