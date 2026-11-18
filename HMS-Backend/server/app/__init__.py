@@ -4,6 +4,7 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_jwt_extended.exceptions import JWTExtendedException
 from flask_restful import Api
+import os
 
 from app.extensions import db, bcrypt
 
@@ -35,19 +36,28 @@ def create_app(test_config=None):
 
     migrate.init_app(app, db)
 
+    cors_origins = [
+        "http://localhost:3000",
+        "http://localhost:4173",
+        "http://localhost:5173",
+        "http://localhost:5555",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:4173",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5555",
+    ]
+    extra_cors_origins = os.getenv("CORS_ALLOWED_ORIGINS", "")
+    if extra_cors_origins:
+        cors_origins.extend(
+            origin.strip()
+            for origin in extra_cors_origins.split(",")
+            if origin.strip()
+        )
+
     CORS(
         app,
         supports_credentials=True,
-        origins=[
-            "http://localhost:3000",
-            "http://localhost:4173",
-            "http://localhost:5173",
-            "http://localhost:5555",
-            "http://127.0.0.1:3000",
-            "http://127.0.0.1:4173",
-            "http://127.0.0.1:5173",
-            "http://127.0.0.1:5555",
-        ],
+        origins=list(dict.fromkeys(cors_origins)),
     )
 
     from app import models
