@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getApiErrorMessage } from '../../lib/api/errors';
+import { getApiUrl } from '../../lib/api/client';
 
 const endpoints = {
   invoices: '/api/billing/invoices',
@@ -11,7 +12,7 @@ const endpoints = {
 async function apiRequest(path, options = {}) {
   const token = sessionStorage.getItem('access_token');
 
-  const response = await fetch(path, {
+  const response = await fetch(getApiUrl(path), {
     ...options,
     headers: {
       Accept: 'application/json',
