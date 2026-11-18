@@ -23,5 +23,10 @@ class Config:
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", SECRET_KEY)
     SQLALCHEMY_DATABASE_URI = get_database_uri()
     DEBUG = os.getenv("FLASK_DEBUG", "").lower() in {"1", "true", "yes"}
+    SWAGGER_UI_ENABLED = (
+        os.getenv("SWAGGER_UI_ENABLED", "").lower() in {"1", "true", "yes", "on"}
+        if "SWAGGER_UI_ENABLED" in os.environ
+        else None
+    )
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False

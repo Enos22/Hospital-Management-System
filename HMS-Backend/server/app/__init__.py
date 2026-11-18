@@ -105,4 +105,8 @@ def create_app(test_config=None):
     app.register_blueprint(billing_bp)
     app.register_blueprint(notification_bp)
 
+    from app.openapi import register_openapi
+
+    register_openapi(app)
+
     return app

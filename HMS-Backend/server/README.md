@@ -13,6 +13,8 @@ python run.py
 
 The development server runs on `http://127.0.0.1:5555`. `GET /health` checks that the application is responding. PostgreSQL is the default database (`postgresql+psycopg://postgres@localhost:5432/afyacare`).
 
+For interactive backend testing, start the app with `FLASK_DEBUG=1 python run.py` and open `http://127.0.0.1:5555/api/docs`. Swagger UI is enabled automatically in testing and debug mode; it is disabled by default otherwise. Set `SWAGGER_UI_ENABLED=true` in the environment to opt in outside those modes. The generated OpenAPI document is available at `/api/openapi.json`.
+
 Create the PostgreSQL database before starting the server:
 
 ```bash
