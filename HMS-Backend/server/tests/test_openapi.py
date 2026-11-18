@@ -26,7 +26,32 @@ def test_swagger_ui_and_openapi_document_are_available_in_testing(client):
             "schema": {"type": "integer", "format": "int32"},
         }
     ]
-    assert "requestBody" in spec["paths"]["/api/auth/signup"]["post"]
+    signup_body = spec["paths"]["/api/auth/signup"]["post"]["requestBody"]
+    signup_schema = signup_body["content"]["application/json"]["schema"]
+    assert signup_schema["required"] == [
+        "username",
+        "email",
+        "password",
+        "password_confirmation",
+    ]
+    assert signup_schema["properties"]["role"]["enum"] == ["patient", "doctor"]
+    assert "must be unique" in spec["paths"]["/api/auth/signup"]["post"][
+        "description"
+    ]
+    assert signup_body["content"]["application/json"]["example"] == {
+        "username": "your-username",
+        "email": "you@example.com",
+        "password": "choose-a-password",
+        "password_confirmation": "choose-a-password",
+        "role": "patient",
+    }
+
+    login_schema = (
+        spec["paths"]["/api/auth/login"]["post"]["requestBody"]["content"][
+            "application/json"
+        ]["schema"]
+    )
+    assert login_schema["required"] == ["username", "password"]
 
 
 def test_swagger_can_be_disabled():
