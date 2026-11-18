@@ -11,6 +11,52 @@ _PUBLIC_API_PATHS = {
     "/api/auth/login",
     "/api/auth/logout",
 }
+_OPERATION_DETAILS = {
+    ("POST", "/api/auth/signup"): {
+        "summary": "Register a new patient or doctor",
+        "description": (
+            "Username and email must be unique. For an existing account, use "
+            "POST /api/auth/login instead."
+        ),
+    },
+    ("GET", "/"): {
+        "description": "Intentionally public backend service information.",
+    },
+    ("GET", "/health"): {
+        "description": "Intentionally public health check used by hosting probes.",
+    },
+}
+_REQUEST_BODIES = {
+    ("POST", "/api/auth/signup"): {
+        "required": ["username", "email", "password", "password_confirmation"],
+        "properties": {
+            "username": {"type": "string", "maxLength": 50},
+            "email": {"type": "string", "format": "email", "maxLength": 100},
+            "password": {"type": "string", "minLength": 1},
+            "password_confirmation": {"type": "string", "minLength": 1},
+            "role": {
+                "type": "string",
+                "enum": ["patient", "doctor"],
+                "default": "patient",
+            },
+        },
+        "example": {
+            "username": "your-username",
+            "email": "you@example.com",
+            "password": "choose-a-password",
+            "password_confirmation": "choose-a-password",
+            "role": "patient",
+        },
+    },
+    ("POST", "/api/auth/login"): {
+        "required": ["username", "password"],
+        "properties": {
+            "username": {"type": "string"},
+            "password": {"type": "string"},
+        },
+        "example": {"username": "your-username", "password": "your-password"},
+    },
+}
 
 
 def _openapi_path(rule: Rule) -> str:
@@ -66,14 +112,22 @@ def create_openapi_spec(app: Flask) -> dict:
 
         path_item = paths.setdefault(path, {})
         for method in sorted(rule.methods & _HTTP_METHODS):
+            details = _OPERATION_DETAILS.get((method, path), {})
             operation = {
                 "operationId": f"{method.lower()}_{path.strip('/').replace('/', '_').replace('{', '').replace('}', '') or 'root'}",
-                "summary": f"{method} {_tag_for_path(path)} endpoint",
+                "summary": details.get(
+                    "summary", f"{method} {_tag_for_path(path)} endpoint"
+                ),
                 "tags": [_tag_for_path(path)],
                 "responses": {
                     "200": {"description": "Successful response"},
                     "default": {"description": "Error response"},
                 },
+                **(
+                    {"description": details["description"]}
+                    if "description" in details
+                    else {}
+                ),
             }
 
             parameters = _path_parameters(rule)
@@ -84,15 +138,25 @@ def create_openapi_spec(app: Flask) -> dict:
                 operation["security"] = [{"BearerAuth": []}]
 
             if method in {"POST", "PUT", "PATCH"}:
+                body = _REQUEST_BODIES.get((method, path))
                 operation["requestBody"] = {
                     "required": True,
                     "content": {
                         "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "additionalProperties": True,
-                            },
-                            "example": {},
+                            "schema": (
+                                {
+                                    "type": "object",
+                                    "required": body["required"],
+                                    "properties": body["properties"],
+                                    "additionalProperties": False,
+                                }
+                                if body
+                                else {
+                                    "type": "object",
+                                    "additionalProperties": True,
+                                }
+                            ),
+                            **({"example": body["example"]} if body else {}),
                         }
                     },
                 }
