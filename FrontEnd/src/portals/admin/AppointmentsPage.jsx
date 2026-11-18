@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getApiErrorMessage } from '../../lib/api/errors';
+import { getApiUrl } from '../../lib/api/client';
 
 async function apiRequest(path, options = {}) {
   const token = sessionStorage.getItem('access_token');
@@ -10,7 +11,7 @@ async function apiRequest(path, options = {}) {
     ...options.headers,
   };
 
-  const response = await fetch(path, { ...options, headers });
+  const response = await fetch(getApiUrl(path), { ...options, headers });
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
