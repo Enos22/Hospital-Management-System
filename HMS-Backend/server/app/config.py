@@ -3,20 +3,20 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv(Path(__file__).resolve().parents[1] / ".env")
-
+# Only load .env locally. Never override Render's real env vars.
+load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=False)
 
 def get_database_uri():
-    database_uri = os.getenv(
-        "DATABASE_URL",
-        "postgresql+psycopg://postgres@localhost:5432/afyacare",
-    )
+    database_uri = os.getenv("DATABASE_URL")
+
+    if not database_uri:
+        raise RuntimeError("DATABASE_URL is not set in environment")
+
     if database_uri.startswith("postgres://"):
         return database_uri.replace("postgres://", "postgresql+psycopg://", 1)
     if database_uri.startswith("postgresql://"):
         return database_uri.replace("postgresql://", "postgresql+psycopg://", 1)
     return database_uri
-
 
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key")
