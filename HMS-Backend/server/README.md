@@ -13,6 +13,20 @@ python run.py
 
 The development server runs on `http://127.0.0.1:5555`. `GET /health` checks that the application is responding. PostgreSQL is the default database (`postgresql+psycopg://postgres@localhost:5432/afyacare`).
 
+For interactive backend testing, start the app with `FLASK_DEBUG=1 python run.py` and open `http://127.0.0.1:5555/api/docs`. Swagger UI is enabled automatically in testing and debug mode; it is disabled by default otherwise. Set `SWAGGER_UI_ENABLED=true` in the environment to opt in outside those modes. The generated OpenAPI document is available at `/api/openapi.json`.
+
+## Create an admin in the Render database
+
+Public signup cannot create admin accounts. To create one without Render Shell:
+
+1. In the Render Dashboard, open the PostgreSQL database used by the backend and copy its **External Database URL** from **Connect**. Do not share or commit this URL.
+2. On your computer, open a terminal in this `server` directory and activate the backend virtual environment (or create one and install `requirements.txt` as described above).
+3. Run `python create_admin.py`. The script prompts for the database URL and passwords without displaying them, confirms the target database, and creates only the admin account you enter. It does not run the demo seed data or change existing users.
+4. If the external database URL is unavailable from your plan or network, use a temporary Render Background Worker or a one-off deployment command to run this script in the service environment; remove the temporary worker/command and any credentials from Render Environment afterward.
+5. Sign in at `/api/docs` with the new admin credentials, click **Authorize**, then try `GET /api/admin/dashboard`.
+
+Use a unique, strong password. Never use the example seed credentials for a production admin.
+
 Create the PostgreSQL database before starting the server:
 
 ```bash
