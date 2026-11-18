@@ -43,3 +43,5 @@ export function AuthProvider({ children }) {
 
 
     const authToken = data.access_token || data.token;
+  }
+}
