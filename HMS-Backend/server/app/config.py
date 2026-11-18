@@ -7,10 +7,10 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=False)
 
 def get_database_uri():
-    database_uri = os.getenv("DATABASE_URL")
-
-    if not database_uri:
-        raise RuntimeError("DATABASE_URL is not set in environment")
+    database_uri = os.getenv(
+        "DATABASE_URL",
+        "postgresql://postgres@localhost:5432/afyacare",
+    )
 
     if database_uri.startswith("postgres://"):
         return database_uri.replace("postgres://", "postgresql+psycopg://", 1)
