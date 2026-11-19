@@ -1,0 +1,50 @@
+from marshmallow import fields, validates, ValidationError
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+from app.models.doctor import Doctor
+class DoctorSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Doctor
+        load_instance = True
+        include_fk = True
+
+    id = fields.Int(dump_only=True)
+    name = fields.Str(required=True)
+    age = fields.Int(required=True)
+    gender = fields.Str(required=True)
+    address = fields.Str(required=True)
+    phone_number = fields.Str(required=True)
+    email = fields.Email(required=True)
+    speciality_id = fields.Int(required=True)
+
+    @validates("age")
+    def validate_age(self, value):
+        if value < 0:
+            raise ValidationError(
+                "Age must be a non-negative integer."
+            )
+    @validates("gender")
+    def validate_gender(self, value):
+        if value not in ["male", "female", "other"]:
+            raise ValidationError(
+                "Gender must be one of: 'male', 'female', or 'other'."
+            )
+    @validates("email")
+    def validate_email(self, value):
+        if not value:
+            raise ValidationError("Email is required.")
+        if "@" not in value or "." not in value:
+            raise ValidationError("Invalid email format.")
+    @validates("speciality_id")
+    def validate_speciality_id(self, value):
+        if not value:
+            raise ValidationError("Speciality ID is required.")
+    @validates("phone_number")
+    def validate_phone_number(self, value):
+        if not value:
+            raise ValidationError("Phone number is required.")
+        if len(value) < 10:
+            raise ValidationError("Phone number must be at least 10 digits long.")
+
+
+doctor_schema = DoctorSchema()
+doctors_schema = DoctorSchema(many=True)
