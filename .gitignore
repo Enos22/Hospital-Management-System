@@ -54,7 +54,7 @@ jspm_packages
 # pytest cache
 .pytest_cache
 __pycache__
-
+backend/
 # database
 *.db
 instance
