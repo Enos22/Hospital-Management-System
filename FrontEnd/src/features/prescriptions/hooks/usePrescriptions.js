@@ -1,8 +1,4 @@
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useState, useEffect, useCallback } from "react";
 
 import {
   getPrescriptions,
@@ -12,65 +8,99 @@ import {
   deletePrescription,
 } from "../api/prescriptionsApi";
 
-const prescriptionKey = ["prescriptions"];
-
 export function usePrescriptions(params = {}) {
-  const query = useQuery({
-    queryKey: [...prescriptionKey, params],
-    queryFn: () => getPrescriptions(params),
-  });
+  const [prescriptions, setPrescriptions] = useState([]);
+  const [metadata, setMetadata] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  return {
-    prescriptions: query.data?.prescriptions || [],
-    metadata: query.data?.metadata || null,
-    isLoading: query.isLoading,
-    error: query.error,
-    refresh: query.refetch,
-  };
+  const paramsKey = JSON.stringify(params);
+
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const data = await getPrescriptions(JSON.parse(paramsKey));
+      setPrescriptions(data.prescriptions || []);
+      setMetadata(data.metadata || null);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [paramsKey]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { prescriptions, metadata, isLoading, error, refresh };
 }
 
 export function usePrescription(prescriptionId) {
-  const query = useQuery({
-    queryKey: [...prescriptionKey, "detail", prescriptionId],
-    queryFn: () => getPrescription(prescriptionId),
-    enabled: Boolean(prescriptionId),
-  });
+  const [prescription, setPrescription] = useState(null);
+  const [isLoading, setIsLoading] = useState(Boolean(prescriptionId));
+  const [error, setError] = useState(null);
 
-  return {
-    prescription: query.data?.prescription || null,
-    isLoading: query.isLoading,
-    error: query.error,
-    refresh: query.refetch,
+  const refresh = useCallback(async () => {
+    if (!prescriptionId) {
+      setPrescription(null);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const data = await getPrescription(prescriptionId);
+      setPrescription(data.prescription || null);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [prescriptionId]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { prescription, isLoading, error, refresh };
+}
+
+function usePrescriptionMutation(action) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const mutateAsync = async (data) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      return await action(data);
+    } catch (err) {
+      setError(err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  return { mutateAsync, isLoading, error };
 }
 
 export function useCreatePrescription() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: createPrescription,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: prescriptionKey }),
-  });
+  return usePrescriptionMutation(createPrescription);
 }
 
 export function useUpdatePrescription() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ prescriptionId, prescriptionData }) =>
-      updatePrescription(prescriptionId, prescriptionData),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: prescriptionKey }),
-  });
+  return usePrescriptionMutation(({ prescriptionId, prescriptionData }) =>
+    updatePrescription(prescriptionId, prescriptionData)
+  );
 }
 
 export function useDeletePrescription() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: deletePrescription,
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: prescriptionKey }),
-  });
+  return usePrescriptionMutation(deletePrescription);
 }

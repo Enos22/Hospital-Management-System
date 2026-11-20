@@ -1,8 +1,4 @@
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useState, useEffect, useCallback } from "react";
 
 import {
   getLaboratoryTests,
@@ -11,62 +7,95 @@ import {
   updateLaboratoryTest,
 } from "../api/laboratoryApi";
 
-// Fetch all laboratory tests
-export const useLaboratoryTests = (params = {}) => {
-  const query = useQuery({
-    queryKey: ["laboratory-tests", params],
-    queryFn: () => getLaboratoryTests(params),
-  });
+export function useLaboratoryTests(params = {}) {
+  const [tests, setTests] = useState([]);
+  const [metadata, setMetadata] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  return {
-    tests: query.data?.laboratory_tests || [],
-    metadata: query.data?.metadata || null,
-    isLoading: query.isLoading,
-    error: query.error,
-    refresh: query.refetch,
+  const paramsKey = JSON.stringify(params);
+
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const data = await getLaboratoryTests(JSON.parse(paramsKey));
+      setTests(data.laboratory_tests || []);
+      setMetadata(data.metadata || null);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [paramsKey]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { tests, metadata, isLoading, error, refresh };
+}
+
+export function useLaboratoryTest(testId) {
+  const [test, setTest] = useState(null);
+  const [isLoading, setIsLoading] = useState(Boolean(testId));
+  const [error, setError] = useState(null);
+
+  const refresh = useCallback(async () => {
+    if (!testId) {
+      setTest(null);
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const data = await getLaboratoryTest(testId);
+      setTest(data.laboratory_test || null);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [testId]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { test, isLoading, error, refresh };
+}
+
+function useLaboratoryMutation(action) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const mutateAsync = async (data) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      return await action(data);
+    } catch (err) {
+      setError(err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   };
-};
 
-// Fetch one laboratory test
-export const useLaboratoryTest = (testId) => {
-  const query = useQuery({
-    queryKey: ["laboratory-tests", testId],
-    queryFn: () => getLaboratoryTest(testId),
-    enabled: Boolean(testId),
-  });
+  return { mutateAsync, isLoading, error };
+}
 
-  return {
-    test: query.data?.laboratory_test || null,
-    isLoading: query.isLoading,
-    error: query.error,
-  };
-};
+export function useCreateLaboratoryTest() {
+  return useLaboratoryMutation(createLaboratoryTest);
+}
 
-// Create a laboratory test
-export const useCreateLaboratoryTest = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: createLaboratoryTest,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["laboratory-tests"],
-      });
-    },
-  });
-};
-
-// Update a laboratory test
-export const useUpdateLaboratoryTest = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ testId, testData }) =>
-      updateLaboratoryTest(testId, testData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["laboratory-tests"],
-      });
-    },
-  });
-};
+export function useUpdateLaboratoryTest() {
+  return useLaboratoryMutation(({ testId, testData }) =>
+    updateLaboratoryTest(testId, testData)
+  );
+}

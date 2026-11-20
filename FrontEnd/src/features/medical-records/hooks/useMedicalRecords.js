@@ -1,102 +1,198 @@
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useState, useEffect, useCallback } from "react";
 
 import {
   getMedicalRecords,
   getMedicalRecord,
-  getPatientMedicalHistory,
   createMedicalRecord,
   updateMedicalRecord,
   deleteMedicalRecord,
+  getPatientMedicalHistory,
 } from "../api/medicalRecordsApi";
 
-const medicalRecordsKey = ["medical-records"];
+// Fetch all medical records
+export const useMedicalRecords = (params = {}) => {
+  const [records, setRecords] = useState([]);
+  const [metadata, setMetadata] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-export function useMedicalRecords(params = {}) {
-  const query = useQuery({
-    queryKey: [...medicalRecordsKey, params],
-    queryFn: () => getMedicalRecords(params),
-  });
+  const paramsKey = JSON.stringify(params);
 
-  return {
-    records: query.data?.medical_records || [],
-    metadata: query.data?.metadata || null,
-    isLoading: query.isLoading,
-    error: query.error,
-    refresh: query.refetch,
-  };
-}
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
 
-export function useMedicalRecord(recordId) {
-  const query = useQuery({
-    queryKey: [...medicalRecordsKey, "detail", recordId],
-    queryFn: () => getMedicalRecord(recordId),
-    enabled: Boolean(recordId),
-  });
+    try {
+      const result = await getMedicalRecords(JSON.parse(paramsKey));
 
-  return {
-    record: query.data?.medical_record || null,
-    isLoading: query.isLoading,
-    error: query.error,
-    refresh: query.refetch,
-  };
-}
+      setRecords(result?.medical_records || []);
+      setMetadata(result?.metadata || null);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [paramsKey]);
 
-export function usePatientMedicalHistory(patientId) {
-  const query = useQuery({
-    queryKey: [...medicalRecordsKey, "history", patientId],
-    queryFn: () => getPatientMedicalHistory(patientId),
-    enabled: Boolean(patientId),
-  });
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
 
   return {
-    history: query.data?.medical_history || [],
-    isLoading: query.isLoading,
-    error: query.error,
-    refresh: query.refetch,
+    records,
+    metadata,
+    isLoading,
+    error,
+    refresh,
   };
-}
+};
 
-export function useCreateMedicalRecord() {
-  const queryClient = useQueryClient();
+// Fetch one medical record
+export const useMedicalRecord = (recordId) => {
+  const [record, setRecord] = useState(null);
+  const [isLoading, setIsLoading] = useState(Boolean(recordId));
+  const [error, setError] = useState(null);
 
-  return useMutation({
-    mutationFn: createMedicalRecord,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: medicalRecordsKey,
-      });
-    },
-  });
-}
+  useEffect(() => {
+    if (!recordId) {
+      setRecord(null);
+      setIsLoading(false);
+      return;
+    }
 
-export function useUpdateMedicalRecord() {
-  const queryClient = useQueryClient();
+    let active = true;
 
-  return useMutation({
-    mutationFn: ({ recordId, recordData }) =>
-      updateMedicalRecord(recordId, recordData),
+    const fetchRecord = async () => {
+      setIsLoading(true);
+      setError(null);
 
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: medicalRecordsKey,
-      });
-    },
-  });
-}
+      try {
+        const result = await getMedicalRecord(recordId);
 
-export function useDeleteMedicalRecord() {
-  const queryClient = useQueryClient();
+        if (active) {
+          setRecord(result?.medical_record || null);
+        }
+      } catch (err) {
+        if (active) setError(err);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    };
 
-  return useMutation({
-    mutationFn: deleteMedicalRecord,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: medicalRecordsKey,
-      });
-    },
-  });
-}
+    fetchRecord();
+
+    return () => {
+      active = false;
+    };
+  }, [recordId]);
+
+  return { record, isLoading, error };
+};
+
+// Fetch a patient's medical history
+export const usePatientMedicalHistory = (patientId) => {
+  const [history, setHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(Boolean(patientId));
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!patientId) {
+      setHistory([]);
+      setIsLoading(false);
+      return;
+    }
+
+    let active = true;
+
+    const fetchHistory = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const result = await getPatientMedicalHistory(patientId);
+
+        if (active) {
+          setHistory(result?.medical_history || []);
+        }
+      } catch (err) {
+        if (active) setError(err);
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    };
+
+    fetchHistory();
+
+    return () => {
+      active = false;
+    };
+  }, [patientId]);
+
+  return { history, isLoading, error };
+};
+
+// Create a medical record
+export const useCreateMedicalRecord = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const mutateAsync = async (recordData) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      return await createMedicalRecord(recordData);
+    } catch (err) {
+      setError(err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return { mutateAsync, isLoading, error };
+};
+
+// Update a medical record
+export const useUpdateMedicalRecord = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const mutateAsync = async ({ recordId, recordData }) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      return await updateMedicalRecord(recordId, recordData);
+    } catch (err) {
+      setError(err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return { mutateAsync, isLoading, error };
+};
+
+// Delete a medical record (backend admin-only)
+export const useDeleteMedicalRecord = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const mutateAsync = async (recordId) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      return await deleteMedicalRecord(recordId);
+    } catch (err) {
+      setError(err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return { mutateAsync, isLoading, error };
+};

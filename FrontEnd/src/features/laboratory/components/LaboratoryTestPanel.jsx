@@ -78,7 +78,10 @@ function LabTestPanel({
     setError("");
 
     try {
-      await onUpdate(editingTest, updateData);
+      await onUpdate({
+  testId: editingTest,
+  testData: updateData,
+});
       setEditingTest(null);
     } catch (err) {
       setError(err.message || "Unable to update laboratory test.");
