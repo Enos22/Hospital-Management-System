@@ -1,4 +1,4 @@
-#!/home/enos/Moringa/Module6/Hospital-Management-System/HMS-Backend/server/.venv/bin/python3
+#!/home/enos/Moringa/Module6/Hospital-Management-System/HMS-Backend/server/.venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys
