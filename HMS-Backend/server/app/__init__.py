@@ -37,19 +37,29 @@ def create_app(test_config=None):
 
     CORS(
         app,
+        resources={
+            r"/api/*": {
+                "origins": [
+                    "http://localhost:3000",
+                    "http://localhost:4173",
+                    "http://localhost:5173",
+                    "http://localhost:5555",
+                    "http://127.0.0.1:3000",
+                    "http://127.0.0.1:4173",
+                    "http://127.0.0.1:5173",
+                    "http://127.0.0.1:5555",
+
+                    # Production frontend
+                    "https://hospital-management-system-ten-red.vercel.app",
+
+                    # Other existing deployment
+                    "https://hospital-management-system-rom765i9s-afyacare.vercel.app",
+                ]
+            }
+        },
         supports_credentials=True,
-        origins=[
-            "http://localhost:3000",
-            "http://localhost:4173",
-            "http://localhost:5173",
-            "http://localhost:5555",
-            "http://127.0.0.1:3000",
-            "http://127.0.0.1:4173",
-            "http://127.0.0.1:5173",
-            "http://127.0.0.1:5555",
-            "https://hospital-management-system-rom765i9s-afyacare.vercel.app",
-            "https://*.vercel.app",
-        ],
+        allow_headers=["Content-Type", "Authorization"],
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     )
 
     from app import models
