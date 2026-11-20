@@ -26,7 +26,7 @@ class Signup(Resource):
         email = data.get("email")
         password = data.get("password")
         confirmation = data.get("password_confirmation")
-        role = data.get("role", "patient")
+        role =  "patient"
 
         if not username:
             return {"error": ["Username is required"]}, 422
@@ -90,7 +90,10 @@ class Logout(Resource):
 class Checksession(Resource):
     @jwt_required()
     def get(self):
-        user = db.session.get(User, get_jwt_identity())
+        user_id = int(get_jwt_identity())
+        user = db.session.get(User, user_id)
+
         if user is None:
             return {"errors": ["Authentication required"]}, 401
+
         return user_schema.dump(user), 200
