@@ -11,8 +11,10 @@ export default function PatientCard({ patient, onView, actions }) {
         </span>
         <div>
           <h2>{name}</h2>
+          
           <p>{email}</p>
         </div>
+
       </div>
       {userId != null && <p className="directory-card__detail">Account ID: {userId}</p>}
       <div className="directory-card__actions">
