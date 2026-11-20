@@ -2,12 +2,20 @@ from flask import Flask, jsonify
 from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from flask_jwt_extended.exceptions import JWTExtendedException
 from flask_restful import Api
 
 from app.extensions import db, bcrypt
 
 migrate = Migrate()
 jwt = JWTManager()
+
+
+class JWTApi(Api):
+    def handle_error(self, error):
+        if isinstance(error, JWTExtendedException):
+            return jsonify({"msg": str(error)}), 401
+        return super().handle_error(error)
 
 
 def create_app(test_config=None):
@@ -57,7 +65,7 @@ def create_app(test_config=None):
     def home():
         return jsonify({"message": "AfyaCare backend is running"}), 200
 
-    api = Api(app)
+    api = JWTApi(app)
 
     from app.routes.admin_routes import (
         AdminDashboard,
@@ -106,5 +114,9 @@ def create_app(test_config=None):
     app.register_blueprint(appointment_bp)
     app.register_blueprint(billing_bp)
     app.register_blueprint(notification_bp)
+
+    from app.openapi import register_openapi
+
+    register_openapi(app)
 
     return app
