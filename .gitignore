@@ -59,4 +59,13 @@ __pycache__
 *.db
 instance
 .vscode
-package-lock.json
+package-lock.json**/__pycache__/
+**/*.pyc
+**/.venv/
+.venv/
+**/__pycache__/
+**/*.pyc
+**/.venv/
+**/.pytest_cache/
+.pytest_cache/
+
