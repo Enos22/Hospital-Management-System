@@ -2,6 +2,7 @@
  * TODO: Present medicine inventory management for administrators.
  */
 import { useEffect, useState } from "react";
+import { getToken } from "../../lib/api/client";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "");
 
@@ -23,7 +24,7 @@ export default function PharmacyPage() {
       throw new Error("VITE_API_BASE_URL is missing from the frontend .env file.");
     }
 
-    const token = sessionStorage.getItem("access_token");
+    const token = getToken();
     const response = await fetch(`${API_BASE_URL}${path}`, {
       ...options,
       headers: {

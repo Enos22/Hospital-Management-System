@@ -11,7 +11,7 @@ export default function Topbar({ user: suppliedUser, onSignOut }) {
   const user = suppliedUser ?? auth.user;
 
   function signOut() {
-    (onSignOut ?? auth.signOut)();
+    (onSignOut ?? auth.logout)();
   }
 
   return (

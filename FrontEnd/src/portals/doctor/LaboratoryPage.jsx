@@ -1,11 +1,14 @@
 /*
  * TODO: Present laboratory requests and test-result workflows.
  */
-import useLaboratory from "../../features/laboratory/hooks/useLaboratory";
-import LabTestPanel from "../../features/laboratory/components/LabTestPanel";
+import { useLaboratoryTests, useCreateLaboratoryTest, useUpdateLaboratoryTest } from "../../features/laboratory/hooks/useLaboratoryTests";
+import LabTestPanel from "../../features/laboratory/components/LaboratoryTestPanel";
 
 export default function LaboratoryPage() {
-  const { tests, loading, error, createTest, updateTest } = useLaboratory();
+  const { tests, isLoading: loading, error, refresh } = useLaboratoryTests();
+  const createTestMutation = useCreateLaboratoryTest();
+  const updateTestMutation = useUpdateLaboratoryTest();
+  const isSubmitting = createTestMutation.isLoading || updateTestMutation.isLoading;
 
   if (loading) {
     return <p className="loading-state">Loading laboratory requests...</p>;
@@ -28,8 +31,15 @@ export default function LaboratoryPage() {
 
       <LabTestPanel
         tests={tests}
-        onCreate={createTest}
-        onUpdate={updateTest}
+        onCreate={async (payload) => {
+          await createTestMutation.mutateAsync(payload);
+          await refresh();
+        }}
+        onUpdate={async (payload) => {
+          await updateTestMutation.mutateAsync(payload);
+          await refresh();
+        }}
+        isSubmitting={isSubmitting}
       />
     </section>
   );

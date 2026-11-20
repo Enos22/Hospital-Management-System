@@ -46,3 +46,7 @@ export const ROUTES = {
         return ROUTES.LOGIN
        
         }
+
+export const ROUTE_PATHS = {
+    notifications: ROUTES.NOTIFICATIONS,
+};

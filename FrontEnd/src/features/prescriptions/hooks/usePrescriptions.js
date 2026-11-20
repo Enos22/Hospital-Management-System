@@ -104,3 +104,5 @@ export function useUpdatePrescription() {
 export function useDeletePrescription() {
   return usePrescriptionMutation(deletePrescription);
 }
+
+export default usePrescriptions;

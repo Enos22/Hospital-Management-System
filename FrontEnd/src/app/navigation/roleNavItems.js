@@ -1,15 +1,15 @@
 /*
  * TODO: Define sidebar items by backend role. This controls visibility, not access.
  */
-import { ROUTES } from "./routePaths";
+import { ROUTES } from "./routePaths.js";
 
 export const ROLE_NAV_ITEMS = {
 
     admin: [
         { label: "Dashboard", path: ROUTES.ADMIN.DASHBOARD, icon: "dashboard" },
         { label: "Users", path: ROUTES.ADMIN.USERS, icon: "users" },
-        { label: "Doctors", path: ROUTES.ADMIN.DOCTORS.DASHBOARD, icon: "doctors" },
-        { label: "Patients", path: ROUTES.ADMIN.PATIENTS.DASHBOARD, icon: "patients" },
+        { label: "Doctors", path: ROUTES.ADMIN.DOCTORS, icon: "doctors" },
+        { label: "Patients", path: ROUTES.ADMIN.PATIENTS, icon: "patients" },
         { label: "Appointments", path: ROUTES.ADMIN.APPOINTMENTS, icon: "appointments" },
         { label: "Pharmacy", path: ROUTES.ADMIN.PHARMACY, icon: "pharmacy" },
         { label: "Billing", path: ROUTES.ADMIN.BILLING, icon: "billing" },

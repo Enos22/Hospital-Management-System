@@ -17,3 +17,13 @@ export function normalizeError(error, status) {
 export function getErrorMessage(err) {
  return err?.message || "something went wrong."
 }
+
+export function getApiErrorMessage(error, fallback = "The request could not be completed.") {
+ if (typeof error === "string") return error;
+ if (error && typeof error === "object") {
+  if (typeof error.message === "string") return error.message;
+  if (typeof error.error === "string") return error.error;
+  if (typeof error.msg === "string") return error.msg;
+ }
+ return fallback;
+}

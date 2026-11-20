@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getApiErrorMessage } from '../../lib/api/errors';
-import { getApiUrl } from '../../lib/api/client';
+import { getApiUrl, getToken } from '../../lib/api/client';
 
 export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState(null);
@@ -16,7 +16,7 @@ export default function DashboardPage() {
         setLoading(true);
         setError('');
 
-        const token = sessionStorage.getItem('access_token');
+        const token = getToken();
 
         const response = await fetch(getApiUrl('/api/admin/dashboard'), {
           signal: controller.signal,
