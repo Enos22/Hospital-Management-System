@@ -3,7 +3,7 @@
  */
 import Button from "../../../components/ui/Button.jsx";
 import EmptyState from "../../../components/feedback/EmptyState.jsx";
-import { formatDate } from "../../../lib/format/formatDate.js";
+import { formatDate } from "../../../lib/format/FormatDate.js";
 
 export default function NotificationList({
   notifications = [],
