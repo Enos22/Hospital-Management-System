@@ -39,6 +39,8 @@ def create_app(test_config=None):
             "http://127.0.0.1:4173",
             "http://127.0.0.1:5173",
             "http://127.0.0.1:5555",
+            "https://hospital-management-system-rom765i9s-afyacare.vercel.app",
+            "https://*.vercel.app",
         ],
     )
 
