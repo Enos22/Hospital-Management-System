@@ -65,22 +65,28 @@ class Signup(Resource):
         patient_name = data.get("name")
         patient_age = data.get("age")
         patient_gender = data.get("gender")
-        has_patient_details = any(
-            value not in (None, "") for value in (patient_name, patient_age, patient_gender)
-        )
-        if has_patient_details:
-            if not patient_name or patient_age in (None, "") or not patient_gender:
-                return {
-                    "errors": ["Name, age, and gender must all be provided"]
-                }, 422
-            try:
-                patient_age = int(patient_age)
-            except (TypeError, ValueError):
-                return {"errors": ["Age must be a positive integer"]}, 422
-            if patient_age < 1:
-                return {"errors": ["Age must be a positive integer"]}, 422
-            if len(str(patient_gender)) > 10:
-                return {"errors": ["Gender must be 10 characters or fewer"]}, 422
+        if not patient_name or patient_age in (None, "") or not patient_gender:
+            return {
+                "errors": ["Name, age, and gender must all be provided"]
+            }, 422
+        if (
+            not isinstance(patient_name, str)
+            or not patient_name.strip()
+            or len(patient_name) > 100
+        ):
+            return {"errors": ["Name must be 100 characters or fewer"]}, 422
+        try:
+            patient_age = int(patient_age)
+        except (TypeError, ValueError):
+            return {"errors": ["Age must be a positive integer"]}, 422
+        if patient_age < 1:
+            return {"errors": ["Age must be a positive integer"]}, 422
+        if (
+            not isinstance(patient_gender, str)
+            or not patient_gender.strip()
+            or len(patient_gender) > 10
+        ):
+            return {"errors": ["Gender must be 10 characters or fewer"]}, 422
 
         if User.query.filter_by(username=username).first():
             return {"error": ["Username already Exists"]}, 422
@@ -99,14 +105,13 @@ class Signup(Resource):
             db.session.add(user)
             db.session.flush()
 
-            if has_patient_details:
-                patient = Patient(
-                    user_id=user.id,
-                    name=patient_name,
-                    age=patient_age,
-                    gender=patient_gender
-                )
-                db.session.add(patient)
+            patient = Patient(
+                user_id=user.id,
+                name=patient_name.strip(),
+                age=patient_age,
+                gender=patient_gender.strip()
+            )
+            db.session.add(patient)
 
             db.session.commit()
 

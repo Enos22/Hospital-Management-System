@@ -76,3 +76,52 @@ def test_doctor_relationships(app):
         assert doctor.user == user
         assert doctor.speciality == speciality
         assert doctor.speciality.name == "Neurology"
+
+
+def test_admin_can_link_existing_doctor_account_to_profile(
+    app, client, make_user, token_for
+):
+    admin, _ = make_user("admin", username="doctor-profile-admin")
+    with app.app_context():
+        existing_user = User(
+            username="existing-doctor",
+            email="existing-doctor@example.com",
+            role="doctor",
+        )
+        existing_user.password = "Test-password-123"
+        speciality = Speciality(name="Family Medicine")
+        db.session.add_all([existing_user, speciality])
+        db.session.commit()
+        existing_user_id = existing_user.id
+        speciality_id = speciality.id
+
+    response = client.post(
+        "/api/doctors",
+        headers={"Authorization": f"Bearer {token_for(admin)}"},
+        json={
+            "username": "existing-doctor",
+            "speciality_id": speciality_id,
+        },
+    )
+
+    assert response.status_code == 201
+    doctor_data = response.get_json()
+    assert doctor_data["user_id"] == existing_user_id
+    assert doctor_data["doctor_id"] is not None
+
+
+def test_doctor_list_includes_clinical_profile_id(client, make_user, token_for):
+    admin, _ = make_user("admin", username="doctor-list-admin")
+    doctor, _ = make_user("doctor", username="doctor-list-entry")
+    doctor_profile_id = doctor.doctor.id
+
+    response = client.get(
+        "/api/doctors",
+        headers={"Authorization": f"Bearer {token_for(admin)}"},
+    )
+
+    assert response.status_code == 200
+    listed_doctor = next(
+        item for item in response.get_json() if item["user_id"] == doctor.id
+    )
+    assert listed_doctor["doctor_id"] == doctor_profile_id
