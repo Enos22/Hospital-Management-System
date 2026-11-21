@@ -20,6 +20,7 @@ export function clearSessionStorage() {
 export async function apiRequest(path, { method = "GET", body, auth = true } = {}) {
   const headers = { "Content-Type": "application/json" };
 
+  
   if (auth) {
     const token = getToken();
     if (token) headers.Authorization = `Bearer ${token}`;
