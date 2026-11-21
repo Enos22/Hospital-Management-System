@@ -14,6 +14,11 @@ export function normalizeError(error, status) {
       message = error.error;
     } else if (typeof error.msg === "string") {
       message = error.msg;
+    } else if (Array.isArray(error.error)) {
+      details = error.error;
+      message =
+        error.error.find((item) => typeof item === "string") ||
+        "Please check the form and try again.";
     } else if (error.errors) {
       details = error.errors;
       message = Array.isArray(error.errors)
@@ -42,6 +47,10 @@ export function getApiErrorMessage(error, fallback = "The request could not be c
     if (typeof error.message === "string") return error.message;
     if (typeof error.error === "string") return error.error;
     if (typeof error.msg === "string") return error.msg;
+    if (Array.isArray(error.error)) {
+      const firstMessage = error.error.find((item) => typeof item === "string");
+      if (firstMessage) return firstMessage;
+    }
     if (Array.isArray(error.errors)) {
       const firstMessage = error.errors.find((item) => typeof item === "string");
       if (firstMessage) return firstMessage;
