@@ -61,13 +61,12 @@ export function AuthForm({ mode = "login", onSubmit, loading, error }) {
       </label>
 
       {isSignup && (
-        <label className="auth-form__field">
-          Account type
-          <select name="role" defaultValue="patient">
-            <option value="patient">Patient</option>
-            <option value="doctor">Doctor</option>
-          </select>
-        </label>
+        <>
+          <input type="hidden" name="role" value="patient" />
+          <p className="auth-form__hint">
+            Doctor accounts are created by a hospital administrator.
+          </p>
+        </>
       )}
 
       <label className="auth-form__field">
