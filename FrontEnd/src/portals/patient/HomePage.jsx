@@ -3,6 +3,7 @@
  */
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
+import { ROUTES } from "../../app/navigation/routePaths";
 import { useAppointments } from "../../features/appointments/hooks/useAppointments";
 import { useMedicalRecords } from "../../features/medical-records/hooks/useMedicalRecords";
 import { usePrescriptions } from "../../features/prescriptions/hooks/usePrescriptions";
@@ -79,26 +80,26 @@ export default function HomePage() {
         <article className="dashboard-card">
           <h3>Appointments</h3>
           <p className="dashboard-number">{appointments.length}</p>
-          <Link to="/patient/appointments">View appointments</Link>
+          <Link to={ROUTES.PATIENT.APPOINTMENTS}>View appointments</Link>
         </article>
 
         <article className="dashboard-card">
           <h3>Medical Records</h3>
           <p className="dashboard-number">{recordList.length}</p>
-          <Link to="/patient/medical-history">View medical history</Link>
+          <Link to={ROUTES.PATIENT.HISTORY}>View medical history</Link>
         </article>
 
         <article className="dashboard-card">
           <h3>Prescriptions</h3>
           <p className="dashboard-number">{prescriptions.length}</p>
-          <Link to="/patient/prescriptions">View prescriptions</Link>
+          <Link to={ROUTES.PATIENT.PRESCRIPTIONS}>View prescriptions</Link>
         </article>
       </section>
 
       <section className="dashboard-section">
         <div className="section-heading">
           <h2>Upcoming Appointments</h2>
-          <Link to="/patient/appointments">View all</Link>
+          <Link to={ROUTES.PATIENT.APPOINTMENTS}>View all</Link>
         </div>
 
         {appointmentsError && (
@@ -132,10 +133,10 @@ export default function HomePage() {
         <h2>Quick Actions</h2>
 
         <div className="quick-actions">
-          <Link to="/patient/book-appointment">Book an Appointment</Link>
-          <Link to="/patient/medical-history">View Medical History</Link>
-          <Link to="/patient/laboratory">View Laboratory Results</Link>
-          <Link to="/patient/bills">View Bills</Link>
+          <Link to={ROUTES.PATIENT.BOOK}>Book an Appointment</Link>
+          <Link to={ROUTES.PATIENT.HISTORY}>View Medical History</Link>
+          <Link to={ROUTES.PATIENT.LAB}>View Laboratory Results</Link>
+          <Link to={ROUTES.PATIENT.BILLS}>View Bills</Link>
         </div>
       </section>
     </main>

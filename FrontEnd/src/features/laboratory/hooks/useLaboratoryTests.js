@@ -8,7 +8,17 @@ import {
 } from "../api/laboratoryApi";
 
 function getErrorMessage(error) {
-  return error instanceof Error ? error.message : String(error);
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object") {
+    if (typeof error.message === "string") return error.message;
+    if (typeof error.error === "string") return error.error;
+    if (typeof error.msg === "string") return error.msg;
+    if (Array.isArray(error.errors)) {
+      const firstMessage = error.errors.find((item) => typeof item === "string");
+      if (firstMessage) return firstMessage;
+    }
+  }
+  return "Unable to load laboratory tests.";
 }
 
 export function useLaboratoryTests(params = {}) {

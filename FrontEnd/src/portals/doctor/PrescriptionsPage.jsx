@@ -3,9 +3,22 @@
  */
 import { useEffect, useState } from "react";
 import { get } from "../../lib/api/client";
+import { getApiErrorMessage } from "../../lib/api/errors";
 import usePrescriptions from "../../features/prescriptions/hooks/usePrescriptions";
 import PrescriptionForm from "../../features/prescriptions/components/PrescriptionForm";
 import PrescriptionCard from "../../features/prescriptions/components/PrescriptionCard";
+
+function getPatientOptions(response) {
+  const patients = response?.patients ?? response?.data?.patients ?? [];
+  return patients.filter((patient) => patient.patient_id != null);
+}
+
+function getDoctorOptions(response) {
+  const doctors = Array.isArray(response)
+    ? response
+    : response?.doctors ?? response?.data?.doctors ?? [];
+  return doctors.filter((doctor) => doctor.doctor_id != null);
+}
 
 export default function PrescriptionsPage() {
   const {
@@ -17,6 +30,8 @@ export default function PrescriptionsPage() {
   } = usePrescriptions();
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
+  const [patientCount, setPatientCount] = useState(null);
+  const [doctorCount, setDoctorCount] = useState(null);
   const [medicines, setMedicines] = useState([]);
   const [optionsLoading, setOptionsLoading] = useState(true);
   const [optionsError, setOptionsError] = useState("");
@@ -27,34 +42,53 @@ export default function PrescriptionsPage() {
     async function loadFormOptions() {
       setOptionsLoading(true);
       setOptionsError("");
-      try {
-        const [patientResponse, doctorResponse, medicineResponse] =
-          await Promise.all([
+      const [patientResult, doctorResult, medicineResult] =
+        await Promise.allSettled([
             get("/api/patients?per_page=100"),
             get("/api/doctors"),
             get("/api/pharmacy/medicines?per_page=100"),
-          ]);
-        if (!active) return;
-        setPatients(
-          (patientResponse?.patients ?? []).filter(
-            (patient) => patient.patient_id != null
-          )
+        ]);
+      if (!active) return;
+
+      const failures = [];
+      if (patientResult.status === "fulfilled") {
+        const patientResponse = patientResult.value;
+        const patientRecords =
+          patientResponse?.patients ?? patientResponse?.data?.patients ?? [];
+        setPatientCount(patientRecords.length);
+        setPatients(getPatientOptions(patientResponse));
+      } else {
+        failures.push(
+          `Patients: ${getApiErrorMessage(patientResult.reason, "Unable to load patients.")}`
         );
-        setDoctors(
-          (Array.isArray(doctorResponse) ? doctorResponse : []).filter(
-            (doctor) => doctor.doctor_id != null
-          )
-        );
-        setMedicines(medicineResponse?.medicines ?? []);
-      } catch (requestError) {
-        if (active) {
-          setOptionsError(
-            requestError.message || "Unable to load prescription form options."
-          );
-        }
-      } finally {
-        if (active) setOptionsLoading(false);
       }
+
+      if (doctorResult.status === "fulfilled") {
+        const doctorResponse = doctorResult.value;
+        const doctorRecords = Array.isArray(doctorResponse)
+          ? doctorResponse
+          : doctorResponse?.doctors ?? doctorResponse?.data?.doctors ?? [];
+        setDoctorCount(doctorRecords.length);
+        setDoctors(getDoctorOptions(doctorResponse));
+      } else {
+        failures.push(
+          `Doctors: ${getApiErrorMessage(doctorResult.reason, "Unable to load doctors.")}`
+        );
+      }
+
+      if (medicineResult.status === "fulfilled") {
+        setMedicines(
+          medicineResult.value?.medicines ??
+            medicineResult.value?.data?.medicines ??
+            []
+        );
+      } else {
+        failures.push(
+          `Medicines: ${getApiErrorMessage(medicineResult.reason, "Unable to load medicines.")}`
+        );
+      }
+      setOptionsError(failures.join(" "));
+      setOptionsLoading(false);
     }
 
     loadFormOptions();
@@ -84,6 +118,20 @@ export default function PrescriptionsPage() {
       {optionsError && (
         <p className="error-message" role="alert">
           {optionsError}
+        </p>
+      )}
+      {!optionsError && patientCount !== null && patients.length === 0 && (
+        <p className="error-message" role="status">
+          {patientCount > 0
+            ? `${patientCount} patient accounts were returned, but none have patient profile IDs. An administrator must create or repair their patient profiles before prescriptions can be created.`
+            : "No patient accounts were returned by the API."}
+        </p>
+      )}
+      {!optionsError && doctorCount !== null && doctors.length === 0 && (
+        <p className="error-message" role="status">
+          {doctorCount > 0
+            ? `${doctorCount} doctor accounts were returned, but none have doctor profile IDs. An administrator must create or link doctor profiles before prescriptions can be created.`
+            : "No doctor accounts were returned by the API."}
         </p>
       )}
 
