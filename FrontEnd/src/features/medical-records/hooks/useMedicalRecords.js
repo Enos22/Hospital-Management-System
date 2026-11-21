@@ -39,16 +39,17 @@ export const useMedicalRecords = (params = {}) => {
   }, [refresh]);
 
   return {
-  records,
-  metadata,
-  isLoading,
-  loading: isLoading,
-  error:
-    typeof error === "string"
-      ? error
-      : error?.message || "Unable to load medical records.",
-  refresh,
-};
+    records,
+    metadata,
+    isLoading,
+    loading: isLoading,
+    error: error
+      ? typeof error === "string"
+        ? error
+        : error.message || "Unable to load medical records."
+      : null,
+    refresh,
+  };
 };
 
 // Fetch one medical record
