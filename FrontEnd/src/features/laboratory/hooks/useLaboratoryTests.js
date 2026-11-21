@@ -7,6 +7,10 @@ import {
   updateLaboratoryTest,
 } from "../api/laboratoryApi";
 
+function getErrorMessage(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+
 export function useLaboratoryTests(params = {}) {
   const [tests, setTests] = useState([]);
   const [metadata, setMetadata] = useState(null);
@@ -24,7 +28,7 @@ export function useLaboratoryTests(params = {}) {
       setTests(data.laboratory_tests || []);
       setMetadata(data.metadata || null);
     } catch (err) {
-      setError(err);
+      setError(getErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
@@ -56,7 +60,7 @@ export function useLaboratoryTest(testId) {
       const data = await getLaboratoryTest(testId);
       setTest(data.laboratory_test || null);
     } catch (err) {
-      setError(err);
+      setError(getErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +84,7 @@ function useLaboratoryMutation(action) {
     try {
       return await action(data);
     } catch (err) {
-      setError(err);
+      setError(getErrorMessage(err));
       throw err;
     } finally {
       setIsLoading(false);

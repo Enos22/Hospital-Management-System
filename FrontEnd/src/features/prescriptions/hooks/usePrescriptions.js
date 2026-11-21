@@ -35,7 +35,32 @@ export function usePrescriptions(params = {}) {
     refresh();
   }, [refresh]);
 
-  return { prescriptions, metadata, isLoading, error, refresh };
+  const create = async (prescriptionData) => {
+    const result = await createPrescription(prescriptionData);
+    await refresh();
+    return result;
+  };
+
+  const update = async ({ prescriptionId, prescriptionData }) => {
+    const result = await updatePrescription(prescriptionId, prescriptionData);
+    await refresh();
+    return result;
+  };
+
+  return {
+    prescriptions,
+    metadata,
+    isLoading,
+    loading: isLoading,
+    error: error
+      ? typeof error === "string"
+        ? error
+        : error.message || "Unable to load prescriptions."
+      : null,
+    refresh,
+    createPrescription: create,
+    updatePrescription: update,
+  };
 }
 
 export function usePrescription(prescriptionId) {
