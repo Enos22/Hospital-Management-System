@@ -31,6 +31,20 @@ def doctor_to_dict(user):
     return doctor_data
 
 
+class SpecialityList(Resource):
+    @role_required("admin")
+    def get(self):
+        specialities = Speciality.query.order_by(Speciality.name.asc()).all()
+        return [
+            {
+                "id": speciality.id,
+                "name": speciality.name,
+                "description": speciality.description,
+            }
+            for speciality in specialities
+        ], 200
+
+
 class DoctorList(Resource):
     @role_required("admin", "doctor", "patient")
     def get(self):
@@ -49,27 +63,42 @@ class DoctorList(Resource):
         data = request.get_json(silent=True) or {}
 
         username = data.get("username")
-        speciality_id = data.get("speciality_id")
-
+        if isinstance(username, str):
+            username = username.strip()
         if not username:
             return {"errors": ["Username is required"]}, 422
 
+        try:
+            speciality_id = int(data.get("speciality_id"))
+        except (TypeError, ValueError):
+            return {"errors": ["A valid speciality_id is required"]}, 422
+
         user = User.query.filter_by(username=username).first()
         if user and (user.role != "doctor" or user.doctor is not None):
-            return {"errors": ["Username Exists"]}, 422
+            return {"errors": ["Username already belongs to a non-doctor or a profiled doctor"]}, 409
 
-        speciality = Speciality.query.get(speciality_id)
+        speciality = db.session.get(Speciality, speciality_id)
         if speciality is None:
             return {"errors": ["Speciality not found"]}, 404
+
+        password = data.get("password")
+        email = data.get("email")
+        if user is None:
+            if not isinstance(password, str) or len(password) < 8:
+                return {"errors": ["A password of at least 8 characters is required for a new doctor account"]}, 422
+            if not email:
+                email = f"{username}@hospital.local"
+            if User.query.filter_by(email=email).first():
+                return {"errors": ["Email already exists"]}, 409
 
         try:
             if user is None:
                 user = User(
                     username=username,
-                    email=data.get("email", f"{username}@hospital.local"),
+                    email=email,
                     role="doctor",
                 )
-                user.password = data.get("password", "doctor123")
+                user.password = password
                 db.session.add(user)
                 db.session.flush()
 

@@ -108,6 +108,61 @@ def test_admin_can_link_existing_doctor_account_to_profile(
     doctor_data = response.get_json()
     assert doctor_data["user_id"] == existing_user_id
     assert doctor_data["doctor_id"] is not None
+    assert doctor_data["speciality_id"] == speciality_id
+
+
+def test_admin_can_list_specialities(client, make_user, token_for):
+    admin, _ = make_user("admin", username="speciality-list-admin")
+    db.session.add(
+        Speciality(
+            name="Ophthalmology",
+            description="Eye care",
+        )
+    )
+    db.session.commit()
+
+    response = client.get(
+        "/api/specialities",
+        headers={"Authorization": f"Bearer {token_for(admin)}"},
+    )
+
+    assert response.status_code == 200
+    speciality = next(
+        item
+        for item in response.get_json()
+        if item["name"] == "Ophthalmology"
+    )
+    assert speciality["id"] is not None
+    assert speciality["description"] == "Eye care"
+
+
+def test_speciality_list_requires_admin(client, make_user, token_for):
+    doctor, _ = make_user("doctor", username="speciality-list-doctor")
+
+    response = client.get(
+        "/api/specialities",
+        headers={"Authorization": f"Bearer {token_for(doctor)}"},
+    )
+
+    assert response.status_code == 403
+
+
+def test_new_doctor_requires_secure_password(client, make_user, token_for):
+    admin, _ = make_user("admin", username="doctor-password-admin")
+    speciality = Speciality(name="General Medicine")
+    db.session.add(speciality)
+    db.session.commit()
+
+    response = client.post(
+        "/api/doctors",
+        headers={"Authorization": f"Bearer {token_for(admin)}"},
+        json={
+            "username": "new-doctor-no-password",
+            "speciality_id": speciality.id,
+        },
+    )
+
+    assert response.status_code == 422
 
 
 def test_doctor_list_includes_clinical_profile_id(client, make_user, token_for):

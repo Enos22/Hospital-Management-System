@@ -1107,4 +1107,20 @@ def seed_database():
 
 
 if __name__ == "__main__":
-    seed_database()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "target",
+        choices=("all", "specialties"),
+        nargs="?",
+        default="all",
+    )
+    args = parser.parse_args()
+
+    if args.target == "specialties":
+        with get_seed_app().app_context():
+            db.create_all()
+            seed_specialties()
+    else:
+        seed_database()
