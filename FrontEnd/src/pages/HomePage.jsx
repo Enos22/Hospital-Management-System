@@ -54,9 +54,7 @@ export default function HomePage() {
               billing support in one secure AfyaCare portal.
             </p>
             <div className="home-actions">
-              <Link className="home-primary-action" to={portalLink}>
-                {isAuthenticated ? "Open my portal" : "Get started"}
-              </Link>
+              
               <a className="home-secondary-action" href="#services">
                 Explore services
               </a>
@@ -122,9 +120,7 @@ export default function HomePage() {
                 </div>
                 <h3>{service.title}</h3>
                 <p>{service.text}</p>
-                <Link to={portalLink} aria-label={`Open ${service.title}`}>
-                  Learn more <span aria-hidden="true">→</span>
-                </Link>
+                
               </article>
             ))}
           </div>
@@ -135,9 +131,7 @@ export default function HomePage() {
             <p className="home-eyebrow">Built around people</p>
             <h2>Better access. Better conversations. Better care.</h2>
           </div>
-          <Link className="home-primary-action" to={portalLink}>
-            Access AfyaCare
-          </Link>
+
         </section>
       </main>
     </div>
