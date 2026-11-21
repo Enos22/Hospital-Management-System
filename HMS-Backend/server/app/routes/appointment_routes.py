@@ -50,6 +50,11 @@ def create_appointment():
     except ValueError:
         return error_response("Invalid appointment date or time", 400)
 
+    if db.session.get(Patient, patient_id) is None:
+        return error_response("Patient profile not found", 404)
+    if db.session.get(Doctor, doctor_id) is None:
+        return error_response("Doctor profile not found", 404)
+
     role = get_jwt().get("role")
     if role not in {"admin", "doctor", "patient"}:
         return error_response("You are not allowed to book appointments", 403)

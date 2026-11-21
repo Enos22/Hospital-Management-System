@@ -3,9 +3,26 @@ from flask_restful import Resource
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 from app.extensions import db
 from app.models.user import User
-from app.schemas.user_schema import user_schema, users_schema
+from app.models.patient import Patient
+from app.schemas.user_schema import user_schema
 from app.middleware.role_middleware import role_required
 from sqlalchemy import or_
+from sqlalchemy.orm import joinedload
+
+
+def patient_to_dict(user):
+    profile = user.patient
+    patient_data = user_schema.dump(user)
+    patient_data.update(
+        {
+            "user_id": user.id,
+            "patient_id": profile.id if profile else None,
+            "name": profile.name if profile else user.username,
+            "age": profile.age if profile else None,
+            "gender": profile.gender if profile else None,
+        }
+    )
+    return patient_data
 
 class PatientList(Resource):
     @role_required("doctor", "admin")
@@ -15,7 +32,9 @@ class PatientList(Resource):
         per_page = request.args.get("per_page", default=10, type=int)
         search_query = request.args.get('search', default=None, type=str)
 
-        query = User.query.filter_by(role="patient")
+        query = User.query.options(joinedload(User.patient)).filter_by(
+            role="patient"
+        )
 
         if search_query:
             search_pattern = f"%{search_query}%"
@@ -29,8 +48,12 @@ class PatientList(Resource):
 
         paginated_patients = query.paginate(page=page, per_page=per_page, error_out=False)
 
+        patients = [
+            patient_to_dict(user) for user in paginated_patients.items
+        ]
+
         return {
-            "patients": users_schema.dump(paginated_patients.items),
+            "patients": patients,
             "metadata": {
                 "total_items": paginated_patients.total,
                 "total_pages": paginated_patients.pages,
@@ -59,7 +82,7 @@ class PatientList(Resource):
             db.session.add(user)
             db.session.commit()
 
-            return user_schema.dump(user), 201
+            return patient_to_dict(user), 201
         except Exception as e:
             db.session.rollback()
             return {"errors": [str(e)]}, 422
@@ -76,7 +99,7 @@ class PatientDetail(Resource):
             return {"errors": ["You are not allowed to view this patient"]}, 403
         if role == "patient" and str(user.id) != str(get_jwt_identity()):
             return {"errors": ["You are not allowed to view this patient"]}, 403
-        return user_schema.dump(user), 200
+        return patient_to_dict(user), 200
     
     @jwt_required()
     def patch(self, id):
@@ -103,7 +126,7 @@ class PatientDetail(Resource):
             if "email" in data:
                 user.email = data["email"]
             db.session.commit()
-            return user_schema.dump(user), 200
+            return patient_to_dict(user), 200
         except Exception as e:
             return {"errors": [str(e)]}, 422
 

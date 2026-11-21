@@ -9,13 +9,40 @@ from app.models.doctor import Doctor
 from app.models.speciality import Speciality
 from app.models.user import User
 from app.middleware.role_middleware import role_required
-from app.schemas.user_schema import user_schema, users_schema
+from app.schemas.user_schema import user_schema
+from sqlalchemy.orm import joinedload
+
+
+def doctor_to_dict(user):
+    profile = user.doctor
+    doctor_data = user_schema.dump(user)
+    doctor_data.update(
+        {
+            "user_id": user.id,
+            "doctor_id": profile.id if profile else None,
+            "speciality_id": profile.speciality_id if profile else None,
+            "speciality": (
+                profile.speciality.name
+                if profile and profile.speciality
+                else None
+            ),
+        }
+    )
+    return doctor_data
 
 
 class DoctorList(Resource):
     @role_required("admin", "doctor", "patient")
     def get(self):
-        return users_schema.dump(User.query.filter_by(role="doctor").all()), 200
+        users = (
+            User.query.options(
+                joinedload(User.doctor).joinedload(Doctor.speciality)
+            )
+            .filter_by(role="doctor")
+            .order_by(User.id.asc())
+            .all()
+        )
+        return [doctor_to_dict(user) for user in users], 200
 
     @role_required("admin")
     def post(self):
@@ -27,7 +54,8 @@ class DoctorList(Resource):
         if not username:
             return {"errors": ["Username is required"]}, 422
 
-        if User.query.filter_by(username=username).first():
+        user = User.query.filter_by(username=username).first()
+        if user and (user.role != "doctor" or user.doctor is not None):
             return {"errors": ["Username Exists"]}, 422
 
         speciality = Speciality.query.get(speciality_id)
@@ -35,23 +63,28 @@ class DoctorList(Resource):
             return {"errors": ["Speciality not found"]}, 404
 
         try:
-            user = User(username=username, email=data.get("email", f"{username}@hospital.local"), role="doctor")
-            user.password = data.get("password", "doctor123")
-            db.session.add(user)
-            db.session.flush()
+            if user is None:
+                user = User(
+                    username=username,
+                    email=data.get("email", f"{username}@hospital.local"),
+                    role="doctor",
+                )
+                user.password = data.get("password", "doctor123")
+                db.session.add(user)
+                db.session.flush()
 
             doctor = Doctor(
                 user_id=user.id,
                 speciality_id=speciality.id,
-                qualification=data.get("qualification", "MBChB"),
-                phone_number=data.get("phone_number", "0700000000"),
+                qualification=data.get("qualification") or "Not provided",
+                phone_number=data.get("phone_number") or f"UNASSIGNED-{user.id}",
                 availability_status=True,
-                license_number=data.get("license_number", f"DOC-{user.id:05d}")
+                license_number=data.get("license_number") or f"PENDING-{user.id}",
             )
             db.session.add(doctor)
             db.session.commit()
 
-            return user_schema.dump(user), 201
+            return doctor_to_dict(user), 201
         except Exception as e:
             db.session.rollback()
             return {"errors": [str(e)]}, 422
@@ -62,7 +95,7 @@ class DoctorDetail(Resource):
         user = db.session.get(User, id)
         if not user or user.role != "doctor":
             return {"errors": ["Doctor not found"]}, 404
-        return user_schema.dump(user), 200
+        return doctor_to_dict(user), 200
 
     @role_required("admin")
     def patch(self, id):
@@ -90,7 +123,7 @@ class DoctorDetail(Resource):
                 return {"errors": ["Email cannot be empty"]}, 400
             user.email = email
         db.session.commit()
-        return user_schema.dump(user), 200
+        return doctor_to_dict(user), 200
 
     @role_required("admin")
     def delete(self, id):
