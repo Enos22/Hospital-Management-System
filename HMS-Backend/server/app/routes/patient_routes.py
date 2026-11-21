@@ -10,6 +10,36 @@ from sqlalchemy import or_
 from sqlalchemy.orm import joinedload
 
 
+def validate_patient_details(data, require_all=True):
+    fields = ("name", "age", "gender")
+    values = {field: data.get(field) for field in fields}
+
+    if require_all and any(value in (None, "") for value in values.values()):
+        return None, "Name, age, and gender must all be provided"
+    if not require_all and not any(value is not None for value in values.values()):
+        return None, None
+    if values["name"] is not None and (
+        not isinstance(values["name"], str)
+        or not values["name"].strip()
+        or len(values["name"]) > 100
+    ):
+        return None, "Name must be between 1 and 100 characters"
+    if values["age"] is not None:
+        try:
+            values["age"] = int(values["age"])
+        except (TypeError, ValueError):
+            return None, "Age must be a positive integer"
+        if values["age"] < 1:
+            return None, "Age must be a positive integer"
+    if values["gender"] is not None and (
+        not isinstance(values["gender"], str)
+        or not values["gender"].strip()
+        or len(values["gender"]) > 10
+    ):
+        return None, "Gender must be between 1 and 10 characters"
+    return values, None
+
+
 def patient_to_dict(user):
     profile = user.patient
     patient_data = user_schema.dump(user)
@@ -71,6 +101,9 @@ class PatientList(Resource):
         password = data.get("password")
         if not username or not email or not password:
             return {"errors": ["Username, email, and password are required"]}, 422
+        patient_details, validation_error = validate_patient_details(data)
+        if validation_error:
+            return {"errors": [validation_error]}, 422
         
         if User.query.filter_by(username= username, role="patient").first():
             return {"errors": ["Username exists"]}, 422
@@ -80,6 +113,15 @@ class PatientList(Resource):
             user = User(username=username, email=email, role="patient")
             user.password = password
             db.session.add(user)
+            db.session.flush()
+            db.session.add(
+                Patient(
+                    user_id=user.id,
+                    name=patient_details["name"].strip(),
+                    age=patient_details["age"],
+                    gender=patient_details["gender"].strip(),
+                )
+            )
             db.session.commit()
 
             return patient_to_dict(user), 201
@@ -116,6 +158,12 @@ class PatientDetail(Resource):
         data = request.get_json(silent=True) or {}
         if not data:
             return {"errors": ["No update data provided"]}, 400
+        patient_details, validation_error = validate_patient_details(
+            data,
+            require_all=user.patient is None,
+        )
+        if validation_error:
+            return {"errors": [validation_error]}, 422
         try:
             if "username" in data:
                 user.username = data["username"]
@@ -125,9 +173,24 @@ class PatientDetail(Resource):
 
             if "email" in data:
                 user.email = data["email"]
+            if user.patient is None:
+                user.patient = Patient(
+                    name=patient_details["name"].strip(),
+                    age=patient_details["age"],
+                    gender=patient_details["gender"].strip(),
+                )
+            elif patient_details:
+                for field, value in patient_details.items():
+                    if value is not None:
+                        setattr(
+                            user.patient,
+                            field,
+                            value.strip() if isinstance(value, str) else value,
+                        )
             db.session.commit()
             return patient_to_dict(user), 200
         except Exception as e:
+            db.session.rollback()
             return {"errors": [str(e)]}, 422
 
     @role_required("admin")

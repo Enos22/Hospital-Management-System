@@ -22,6 +22,78 @@ def test_patient_profile_is_owner_scoped(client, make_user, token_for):
     assert denied.status_code == 403
 
 
+def test_admin_create_patient_creates_profile(client, make_user, token_for):
+    admin, _ = make_user("admin", username="patient-admin")
+    response = client.post(
+        "/api/patients",
+        headers={"Authorization": f"Bearer {token_for(admin)}"},
+        json={
+            "username": "created-patient",
+            "email": "created-patient@example.com",
+            "password": "Test-password-123",
+            "name": "Created Patient",
+            "age": 24,
+            "gender": "Female",
+        },
+    )
+
+    assert response.status_code == 201
+    patient_data = response.get_json()
+    assert patient_data["patient_id"] is not None
+    assert patient_data["name"] == "Created Patient"
+    assert patient_data["age"] == 24
+    assert patient_data["gender"] == "Female"
+
+
+def test_patient_list_includes_clinical_profile_id(client, make_user, token_for):
+    doctor, _ = make_user("doctor", username="patient-list-doctor")
+    patient, patient_profile = make_user(
+        "patient",
+        username="patient-list-entry",
+    )
+
+    response = client.get(
+        "/api/patients?per_page=100",
+        headers={"Authorization": f"Bearer {token_for(doctor)}"},
+    )
+
+    assert response.status_code == 200
+    listed_patient = next(
+        item
+        for item in response.get_json()["patients"]
+        if item["user_id"] == patient.id
+    )
+    assert listed_patient["patient_id"] == patient_profile.id
+
+
+def test_admin_can_repair_patient_without_profile(
+    client, app, make_user, token_for
+):
+    admin, _ = make_user("admin", username="profile-repair-admin")
+    with app.app_context():
+        user = User(
+            username="legacy-patient",
+            email="legacy-patient@example.com",
+            role="patient",
+        )
+        user.password = "Test-password-123"
+        db.session.add(user)
+        db.session.commit()
+        user_id = user.id
+
+    response = client.patch(
+        f"/api/patients/{user_id}",
+        headers={"Authorization": f"Bearer {token_for(admin)}"},
+        json={"name": "Legacy Patient", "age": 42, "gender": "Other"},
+    )
+
+    assert response.status_code == 200
+    patient_data = response.get_json()
+    assert patient_data["user_id"] == user_id
+    assert patient_data["patient_id"] is not None
+    assert patient_data["name"] == "Legacy Patient"
+
+
 def test_create_patient(app):
     with app.app_context():
 
