@@ -25,7 +25,7 @@ export default function LaboratoryPage() {
 
       {error && (
         <p className="error-message" role="alert">
-          {error}
+          {error.message || String(error)}
         </p>
       )}
 
