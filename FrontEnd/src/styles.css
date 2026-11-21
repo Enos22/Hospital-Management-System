@@ -400,6 +400,7 @@ textarea::placeholder {
   display: flex;
   align-items: center;
   gap: clamp(14px, 3vw, 32px);
+  margin-left: auto;
 }
 
 .home-nav a {
@@ -408,6 +409,29 @@ textarea::placeholder {
   font-weight: 650;
   text-decoration: none;
   transition: color 150ms ease;
+}
+
+.home-header-login {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 18px;
+  padding: 8px 15px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: #fff;
+  color: #43516a;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
+}
+
+.home-header-login:hover {
+  border-color: #c5cfee;
+  background: var(--accent-pale);
+  color: var(--accent-strong);
 }
 
 .home-nav a:hover,
@@ -2291,8 +2315,15 @@ button:not(.auth-form button):not(.home-primary-action):not(.home-secondary-acti
   }
 
   .home-nav a:not(.home-nav-cta):not(.home-nav-login),
-  .home-nav-login {
+  .home-nav .home-nav-login {
     display: none;
+  }
+
+  .home-header-login {
+    min-height: 36px;
+    margin-left: 10px;
+    padding: 7px 11px;
+    font-size: 0.8rem;
   }
 
   .home-nav .home-nav-cta {

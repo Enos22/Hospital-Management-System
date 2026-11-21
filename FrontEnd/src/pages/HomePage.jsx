@@ -36,10 +36,13 @@ export default function HomePage() {
           <span>AfyaCare</span>
         </Link>
 
+        <Link className="home-header-login" to={ROUTES.LOGIN}>
+          Sign in
+        </Link>
+
         <nav className="home-nav" aria-label="Main navigation">
           <a href="#services">Services</a>
           <a href="#about">About</a>
-          <Link className="home-nav-login" to={ROUTES.LOGIN}>Sign in</Link>
           <Link className="home-nav-cta" to={ROUTES.SIGNUP}>Create account</Link>
         </nav>
       </header>
@@ -54,7 +57,7 @@ export default function HomePage() {
               billing support in one secure AfyaCare portal.
             </p>
             <div className="home-actions">
-              
+             
               <a className="home-secondary-action" href="#services">
                 Explore services
               </a>
@@ -120,7 +123,7 @@ export default function HomePage() {
                 </div>
                 <h3>{service.title}</h3>
                 <p>{service.text}</p>
-                
+               
               </article>
             ))}
           </div>
