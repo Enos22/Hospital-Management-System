@@ -44,6 +44,43 @@ class SpecialityList(Resource):
             for speciality in specialities
         ], 200
 
+    @role_required("admin")
+    def post(self):
+        data = request.get_json(silent=True) or {}
+        name = data.get("name")
+        description = data.get("description")
+
+        if not isinstance(name, str) or not name.strip():
+            return {"errors": ["Speciality name is required"]}, 422
+        name = name.strip()
+        if len(name) > 100:
+            return {"errors": ["Speciality name must be 100 characters or fewer"]}, 422
+        if description is not None and not isinstance(description, str):
+            return {"errors": ["Description must be text"]}, 422
+
+        existing = Speciality.query.filter(
+            db.func.lower(Speciality.name) == name.lower()
+        ).first()
+        if existing:
+            return {"errors": ["Speciality already exists"]}, 409
+
+        speciality = Speciality(
+            name=name,
+            description=description.strip() if description else None,
+        )
+        try:
+            db.session.add(speciality)
+            db.session.commit()
+        except Exception as error:
+            db.session.rollback()
+            return {"errors": ["Could not create speciality"]}, 500
+
+        return {
+            "id": speciality.id,
+            "name": speciality.name,
+            "description": speciality.description,
+        }, 201
+
 
 class DoctorList(Resource):
     @role_required("admin", "doctor", "patient")
