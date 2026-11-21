@@ -85,7 +85,7 @@ def create_app(test_config=None):
     from app.routes.appointment_routes import appointment_bp
     from app.routes.auth_routes import Checksession, Login, Logout, Signup
     from app.routes.billing_routes import billing_bp
-    from app.routes.doctor_routes import DoctorDetail, DoctorList
+    from app.routes.doctor_routes import DoctorDetail, DoctorList, SpecialityList
     from app.routes.laboratory_routes import LaboratoryTestDetail, LaboratoryTestList
     from app.routes.medical_record_routes import (
         MedicalRecordDetail,
@@ -106,6 +106,7 @@ def create_app(test_config=None):
     api.add_resource(AdminUserDetail, "/api/admin/users/<int:id>")
     api.add_resource(DoctorList, "/api/doctors")
     api.add_resource(DoctorDetail, "/api/doctors/<int:id>")
+    api.add_resource(SpecialityList, "/api/specialities")
     api.add_resource(PatientList, "/api/patients")
     api.add_resource(PatientDetail, "/api/patients/<int:id>")
     api.add_resource(MedicineList, "/api/pharmacy/medicines")
