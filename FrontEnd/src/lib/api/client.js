@@ -1,6 +1,8 @@
 import { TOKEN_KEY, USER_KEY } from "../constants.js";
 import { normalizeError } from "./errors.js";
 
+export const SESSION_EXPIRED_EVENT = "afyacare:session-expired";
+
 const BASE_URL = import.meta.env.DEV
   ? ""
   : import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5555";
@@ -17,6 +19,7 @@ export function getToken() {
 export function clearSessionStorage() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
 }
 
 export async function apiRequest(path, { method = "GET", body, auth = true } = {}) {

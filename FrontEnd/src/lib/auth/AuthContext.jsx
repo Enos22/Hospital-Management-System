@@ -12,7 +12,10 @@ import {
   signupRequest,
 } from "../../features/auth/api/authApi.js";
 import { TOKEN_KEY, USER_KEY } from "../constants.js";
-import { clearSessionStorage } from "../api/client.js";
+import {
+  clearSessionStorage,
+  SESSION_EXPIRED_EVENT,
+} from "../api/client.js";
 
 const AuthContext = createContext(null);
 
@@ -20,6 +23,17 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      setToken(null);
+      setUser(null);
+    };
+
+    window.addEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+    return () =>
+      window.removeEventListener(SESSION_EXPIRED_EVENT, handleSessionExpired);
+  }, []);
 
   useEffect(() => {
     const savedToken = localStorage.getItem(TOKEN_KEY) || localStorage.getItem("token");

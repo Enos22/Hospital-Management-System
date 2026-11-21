@@ -3,13 +3,28 @@
  */
 import { useEffect, useState } from "react";
 import { get } from "../../lib/api/client";
+import { getApiErrorMessage } from "../../lib/api/errors";
 import { useLaboratoryTests, useCreateLaboratoryTest, useUpdateLaboratoryTest } from "../../features/laboratory/hooks/useLaboratoryTests";
 import LabTestPanel from "../../features/laboratory/components/LaboratoryTestPanel";
+
+function getPatientOptions(response) {
+  const patients = response?.patients ?? response?.data?.patients ?? [];
+  return patients.filter((patient) => patient.patient_id != null);
+}
+
+function getDoctorOptions(response) {
+  const doctors = Array.isArray(response)
+    ? response
+    : response?.doctors ?? response?.data?.doctors ?? [];
+  return doctors.filter((doctor) => doctor.doctor_id != null);
+}
 
 export default function LaboratoryPage() {
   const { tests, isLoading: loading, error, refresh } = useLaboratoryTests();
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
+  const [patientCount, setPatientCount] = useState(null);
+  const [doctorCount, setDoctorCount] = useState(null);
   const [optionsError, setOptionsError] = useState("");
   const createTestMutation = useCreateLaboratoryTest();
   const updateTestMutation = useUpdateLaboratoryTest();
@@ -19,29 +34,38 @@ export default function LaboratoryPage() {
     let active = true;
 
     async function loadFormOptions() {
-      try {
-        const [patientResponse, doctorResponse] = await Promise.all([
-          get("/api/patients?per_page=100"),
-          get("/api/doctors"),
-        ]);
-        if (!active) return;
-        setPatients(
-          (patientResponse?.patients ?? []).filter(
-            (patient) => patient.patient_id != null
-          )
+      const [patientResult, doctorResult] = await Promise.allSettled([
+        get("/api/patients?per_page=100"),
+        get("/api/doctors"),
+      ]);
+      if (!active) return;
+
+      const failures = [];
+      if (patientResult.status === "fulfilled") {
+        const patientResponse = patientResult.value;
+        const patientRecords =
+          patientResponse?.patients ?? patientResponse?.data?.patients ?? [];
+        setPatientCount(patientRecords.length);
+        setPatients(getPatientOptions(patientResponse));
+      } else {
+        failures.push(
+          `Patients: ${getApiErrorMessage(patientResult.reason, "Unable to load patients.")}`
         );
-        setDoctors(
-          (Array.isArray(doctorResponse) ? doctorResponse : []).filter(
-            (doctor) => doctor.doctor_id != null
-          )
-        );
-      } catch (requestError) {
-        if (active) {
-          setOptionsError(
-            requestError.message || "Unable to load patients and doctors."
-          );
-        }
       }
+
+      if (doctorResult.status === "fulfilled") {
+        const doctorResponse = doctorResult.value;
+        const doctorRecords = Array.isArray(doctorResponse)
+          ? doctorResponse
+          : doctorResponse?.doctors ?? doctorResponse?.data?.doctors ?? [];
+        setDoctorCount(doctorRecords.length);
+        setDoctors(getDoctorOptions(doctorResponse));
+      } else {
+        failures.push(
+          `Doctors: ${getApiErrorMessage(doctorResult.reason, "Unable to load doctors.")}`
+        );
+      }
+      setOptionsError(failures.join(" "));
     }
 
     loadFormOptions();
@@ -71,6 +95,20 @@ export default function LaboratoryPage() {
       {optionsError && (
         <p className="error-message" role="alert">
           {optionsError}
+        </p>
+      )}
+      {!optionsError && patientCount !== null && patients.length === 0 && (
+        <p className="error-message" role="status">
+          {patientCount > 0
+            ? `${patientCount} patient accounts were returned, but none have patient profile IDs. An administrator must create or repair their patient profiles before lab requests can be made.`
+            : "No patient accounts were returned by the API."}
+        </p>
+      )}
+      {!optionsError && doctorCount !== null && doctors.length === 0 && (
+        <p className="error-message" role="status">
+          {doctorCount > 0
+            ? `${doctorCount} doctor accounts were returned, but none have doctor profile IDs. An administrator must create or link doctor profiles before lab requests can be made.`
+            : "No doctor accounts were returned by the API."}
         </p>
       )}
 

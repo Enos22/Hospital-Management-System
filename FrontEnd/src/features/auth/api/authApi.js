@@ -25,15 +25,27 @@ export async function loginRequest(username, password) {
   return adaptAuthResponse(data);
 }
 
-export async function signupRequest({ username, email, password, role = "patient" }) {
+export async function signupRequest({
+  username,
+  email,
+  password,
+  password_confirmation = password,
+  role = "patient",
+  name,
+  age,
+  gender,
+}) {
   const data = await apiRequest("/api/auth/signup", {
     method: "POST",
     body: {
       username,
       email,
       password,
-      password_confirmation: password,
+      password_confirmation,
       role,
+      ...(name !== undefined && { name }),
+      ...(age !== undefined && { age }),
+      ...(gender !== undefined && { gender }),
     },
     auth: false,
   });
