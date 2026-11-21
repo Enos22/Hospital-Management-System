@@ -35,7 +35,17 @@ export function usePrescriptions(params = {}) {
     refresh();
   }, [refresh]);
 
-  return { prescriptions, metadata, isLoading, error, refresh };
+  return {
+  prescriptions,
+  metadata,
+  isLoading,
+  loading: isLoading,
+  error:
+    typeof error === "string"
+      ? error
+      : error?.message || "Unable to load prescriptions.",
+  refresh,
+};
 }
 
 export function usePrescription(prescriptionId) {

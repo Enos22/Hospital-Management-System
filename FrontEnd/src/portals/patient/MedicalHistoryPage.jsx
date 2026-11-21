@@ -1,6 +1,3 @@
-/*
- * TODO: Present medical history when the patient's clinical profile is available.
- */
 import { useMedicalRecords } from "../../features/medical-records/hooks/useMedicalRecords";
 
 function formatRecordDate(value) {
@@ -18,7 +15,13 @@ function formatRecordDate(value) {
 
 export default function MedicalHistoryPage() {
   const { records, medicalRecords, loading, error } = useMedicalRecords();
+
   const recordList = records || medicalRecords || [];
+
+  const errorMessage =
+    typeof error === "string"
+      ? error
+      : error?.message || "Unable to load medical history.";
 
   return (
     <main className="patient-page">
@@ -31,11 +34,11 @@ export default function MedicalHistoryPage() {
 
       {error && (
         <p className="error-message" role="alert">
-          {error}
+          {errorMessage}
         </p>
       )}
 
-      {!loading && recordList.length === 0 && (
+      {!loading && !error && recordList.length === 0 && (
         <p>No medical records are currently available.</p>
       )}
 
@@ -45,11 +48,13 @@ export default function MedicalHistoryPage() {
             <h2>{record.diagnosis || "Medical Record"}</h2>
 
             <p>
-              <strong>Treatment:</strong> {record.treatment || "Not provided"}
+              <strong>Treatment:</strong>{" "}
+              {record.treatment || "Not provided"}
             </p>
 
             <p>
-              <strong>Doctor ID:</strong> {record.doctor_id || "Not available"}
+              <strong>Doctor ID:</strong>{" "}
+              {record.doctor_id || "Not available"}
             </p>
 
             <p>

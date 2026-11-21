@@ -29,13 +29,18 @@ export default function DashboardPage() {
         const data = await response.json().catch(() => null);
 
         if (!response.ok) {
-          throw new Error(
-            getApiErrorMessage(
-              data,
-              `Could not load dashboard (${response.status})`
-            )
-          );
-        }
+  const apiError = getApiErrorMessage(
+    data,
+    `Could not load dashboard (${response.status})`
+  );
+
+  const message =
+    typeof apiError === 'string'
+      ? apiError
+      : apiError?.message || `Could not load dashboard (${response.status})`;
+
+  throw new Error(message);
+}
 
         setDashboardData(data);
       } catch (err) {
