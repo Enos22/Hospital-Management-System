@@ -136,6 +136,51 @@ def test_admin_can_list_specialities(client, make_user, token_for):
     assert speciality["description"] == "Eye care"
 
 
+def test_admin_can_create_speciality(client, make_user, token_for):
+    admin, _ = make_user("admin", username="speciality-create-admin")
+
+    response = client.post(
+        "/api/specialities",
+        headers={"Authorization": f"Bearer {token_for(admin)}"},
+        json={
+            "name": "  Oncology  ",
+            "description": "Cancer diagnosis and treatment",
+        },
+    )
+
+    assert response.status_code == 201
+    speciality_data = response.get_json()
+    assert speciality_data["id"] is not None
+    assert speciality_data["name"] == "Oncology"
+    assert speciality_data["description"] == "Cancer diagnosis and treatment"
+
+
+def test_speciality_creation_rejects_duplicate_name(client, make_user, token_for):
+    admin, _ = make_user("admin", username="speciality-duplicate-admin")
+    db.session.add(Speciality(name="Oncology"))
+    db.session.commit()
+
+    response = client.post(
+        "/api/specialities",
+        headers={"Authorization": f"Bearer {token_for(admin)}"},
+        json={"name": " oncology "},
+    )
+
+    assert response.status_code == 409
+
+
+def test_speciality_creation_requires_admin(client, make_user, token_for):
+    doctor, _ = make_user("doctor", username="speciality-create-doctor")
+
+    response = client.post(
+        "/api/specialities",
+        headers={"Authorization": f"Bearer {token_for(doctor)}"},
+        json={"name": "Oncology"},
+    )
+
+    assert response.status_code == 403
+
+
 def test_speciality_list_requires_admin(client, make_user, token_for):
     doctor, _ = make_user("doctor", username="speciality-list-doctor")
 
