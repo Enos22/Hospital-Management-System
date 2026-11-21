@@ -1,6 +1,8 @@
 /*
  * TODO: Present prescriptions and doctor-permitted prescription actions.
  */
+import { useEffect, useState } from "react";
+import { get } from "../../lib/api/client";
 import usePrescriptions from "../../features/prescriptions/hooks/usePrescriptions";
 import PrescriptionForm from "../../features/prescriptions/components/PrescriptionForm";
 import PrescriptionCard from "../../features/prescriptions/components/PrescriptionCard";
@@ -13,8 +15,55 @@ export default function PrescriptionsPage() {
     createPrescription,
     updatePrescription,
   } = usePrescriptions();
+  const [patients, setPatients] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [medicines, setMedicines] = useState([]);
+  const [optionsLoading, setOptionsLoading] = useState(true);
+  const [optionsError, setOptionsError] = useState("");
 
-  if (loading) {
+  useEffect(() => {
+    let active = true;
+
+    async function loadFormOptions() {
+      setOptionsLoading(true);
+      setOptionsError("");
+      try {
+        const [patientResponse, doctorResponse, medicineResponse] =
+          await Promise.all([
+            get("/api/patients?per_page=100"),
+            get("/api/doctors"),
+            get("/api/pharmacy/medicines?per_page=100"),
+          ]);
+        if (!active) return;
+        setPatients(
+          (patientResponse?.patients ?? []).filter(
+            (patient) => patient.patient_id != null
+          )
+        );
+        setDoctors(
+          (Array.isArray(doctorResponse) ? doctorResponse : []).filter(
+            (doctor) => doctor.doctor_id != null
+          )
+        );
+        setMedicines(medicineResponse?.medicines ?? []);
+      } catch (requestError) {
+        if (active) {
+          setOptionsError(
+            requestError.message || "Unable to load prescription form options."
+          );
+        }
+      } finally {
+        if (active) setOptionsLoading(false);
+      }
+    }
+
+    loadFormOptions();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (loading || optionsLoading) {
     return <p className="loading-state">Loading prescriptions...</p>;
   }
 
@@ -32,10 +81,21 @@ export default function PrescriptionsPage() {
           {error}
         </p>
       )}
+      {optionsError && (
+        <p className="error-message" role="alert">
+          {optionsError}
+        </p>
+      )}
 
       <div className="prescription-form-section">
         <h2>Create Prescription</h2>
-        <PrescriptionForm onSubmit={createPrescription} />
+        <PrescriptionForm
+          patients={patients}
+          doctors={doctors}
+          medicines={medicines}
+          onSubmit={createPrescription}
+          isSubmitting={Boolean(optionsError)}
+        />
       </div>
 
       <div className="prescriptions-list">

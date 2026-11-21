@@ -80,7 +80,7 @@ function PrescriptionForm({
       >
         <option value="">Select patient</option>
         {patients.map((patient) => (
-          <option key={patient.id} value={patient.id}>
+          <option key={patient.patient_id} value={patient.patient_id}>
             {getName(patient)}
           </option>
         ))}
@@ -96,7 +96,7 @@ function PrescriptionForm({
       >
         <option value="">Select doctor</option>
         {doctors.map((doctor) => (
-          <option key={doctor.id} value={doctor.id}>
+          <option key={doctor.doctor_id} value={doctor.doctor_id}>
             {getName(doctor)}
           </option>
         ))}
@@ -151,7 +151,15 @@ function PrescriptionForm({
         required
       />
 
-      <button type="submit" disabled={isSubmitting}>
+      <button
+        type="submit"
+        disabled={
+          isSubmitting ||
+          patients.length === 0 ||
+          doctors.length === 0 ||
+          medicines.length === 0
+        }
+      >
         {isSubmitting ? "Saving..." : "Save Prescription"}
       </button>
     </form>

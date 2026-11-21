@@ -21,7 +21,7 @@ export default function PharmacyPage() {
       setError("");
 
       try {
-        const response = await get("/pharmacy/medicines");
+        const response = await get("/api/pharmacy/medicines");
         const list = Array.isArray(response)
           ? response
           : response?.medicines || response?.data;

@@ -103,11 +103,12 @@ function LabTestPanel({
           name="patient_id"
           value={formData.patient_id}
           onChange={handleCreateChange}
+          disabled={patients.length === 0}
           required
         >
           <option value="">Select patient</option>
           {patients.map((patient) => (
-            <option key={patient.id} value={patient.id}>
+            <option key={patient.patient_id} value={patient.patient_id}>
               {getName(patient)}
             </option>
           ))}
@@ -119,11 +120,12 @@ function LabTestPanel({
           name="doctor_id"
           value={formData.doctor_id}
           onChange={handleCreateChange}
+          disabled={doctors.length === 0}
           required
         >
           <option value="">Select doctor</option>
           {doctors.map((doctor) => (
-            <option key={doctor.id} value={doctor.id}>
+            <option key={doctor.doctor_id} value={doctor.doctor_id}>
               {getName(doctor)}
             </option>
           ))}
@@ -140,7 +142,10 @@ function LabTestPanel({
           required
         />
 
-        <button type="submit" disabled={isSubmitting}>
+        <button
+          type="submit"
+          disabled={isSubmitting || patients.length === 0 || doctors.length === 0}
+        >
           {isSubmitting ? "Submitting..." : "Request Test"}
         </button>
       </form>

@@ -21,7 +21,7 @@ export default function PatientsPage() {
       setError("");
 
       try {
-        const response = await get("/patients");
+        const response = await get("/api/patients");
         const list = Array.isArray(response)
           ? response
           : response?.patients || response?.data;

@@ -1,7 +1,9 @@
 import { TOKEN_KEY, USER_KEY } from "../constants.js";
 import { normalizeError } from "./errors.js";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5555";
+const BASE_URL = import.meta.env.DEV
+  ? ""
+  : import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5555";
 
 export function getApiUrl(path) {
   if (/^https?:\/\//i.test(path)) return path;

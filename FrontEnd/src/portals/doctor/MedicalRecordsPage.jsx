@@ -24,7 +24,7 @@ export default function MedicalRecordsPage() {
     setError("");
 
     try {
-      const response = await get("/medical-records?page=1&per_page=50");
+      const response = await get("/api/medical-records?page=1&per_page=50");
       const list = response?.medical_records || response?.data;
 
       if (!Array.isArray(list)) {
@@ -71,13 +71,13 @@ export default function MedicalRecordsPage() {
       }
 
       if (editingId) {
-        await patch(`/medical-records/${editingId}`, {
+        await patch(`/api/medical-records/${editingId}`, {
           diagnosis: payload.diagnosis,
           treatment: payload.treatment,
         });
         setMessage("Medical record updated successfully.");
       } else {
-        await post("/medical-records", payload);
+        await post("/api/medical-records", payload);
         setMessage("Medical record created successfully.");
       }
 

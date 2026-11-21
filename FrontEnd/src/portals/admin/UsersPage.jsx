@@ -4,7 +4,9 @@
 import { useEffect, useState } from "react";
 import { getToken } from "../../lib/api/client";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "");
+const API_BASE_URL = import.meta.env.DEV
+  ? ""
+  : import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "");
 
 export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState("");
@@ -18,7 +20,7 @@ export default function UsersPage() {
   const [message, setMessage] = useState("");
 
   async function apiRequest(path, options = {}) {
-    if (!API_BASE_URL) {
+    if (!API_BASE_URL && !import.meta.env.DEV) {
       throw new Error("VITE_API_BASE_URL is missing from the frontend .env file.");
     }
 
