@@ -363,7 +363,7 @@ textarea::placeholder {
 }
 
 .home-brand-mark {
-  width: 40px;
+  width: 50px;
   height: 40px;
   position: relative;
   border-radius: 13px;
@@ -566,7 +566,7 @@ textarea::placeholder {
 
 .home-avatar-stack span:nth-child(2) {
   background: #e9e3f8;
-  color: #705da9;
+  color: #a594d7;
 }
 
 .home-avatar-stack span:nth-child(3) {
@@ -580,17 +580,13 @@ textarea::placeholder {
   position: relative;
   align-self: end;
   overflow: visible;
-  border-radius: 250px 250px 32px 32px;
+  border-radius: 50%;
   background:
     radial-gradient(circle at 64% 30%, #fff 0 5%, transparent 5.6%),
     linear-gradient(145deg, #edf0fc 0%, #dce3f7 100%);
 }
 
-.home-visual-orbit {
-  position: absolute;
-  border: 1px solid rgba(73, 103, 200, 0.17);
-  border-radius: 50%;
-}
+
 
 .orbit-one {
   width: 410px;
@@ -604,111 +600,6 @@ textarea::placeholder {
   height: 300px;
   bottom: -90px;
   left: 30px;
-}
-
-.home-doctor-portrait {
-  position: absolute;
-  inset: 40px 50px 0;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  overflow: hidden;
-  border-radius: 210px 210px 14px 14px;
-}
-
-.portrait-circle {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.5);
-}
-
-.portrait-circle-one {
-  width: 190px;
-  height: 190px;
-  top: 44px;
-  right: 20px;
-}
-
-.portrait-circle-two {
-  width: 130px;
-  height: 130px;
-  bottom: 45px;
-  left: 30px;
-}
-
-.portrait-doctor {
-  width: 280px;
-  height: 400px;
-  position: relative;
-  z-index: 2;
-}
-
-.portrait-head {
-  width: 112px;
-  height: 128px;
-  position: absolute;
-  top: 48px;
-  left: 84px;
-  border-radius: 48% 48% 44% 44%;
-  background: #b77d5d;
-  box-shadow: 0 -27px 0 -7px #263145, -8px -17px 0 -8px #263145, 8px -17px 0 -8px #263145;
-}
-
-.portrait-head::after {
-  width: 18px;
-  height: 6px;
-  position: absolute;
-  bottom: 28px;
-  left: 47px;
-  border-bottom: 2px solid rgba(76, 45, 35, 0.6);
-  border-radius: 50%;
-  content: "";
-}
-
-.portrait-coat {
-  width: 250px;
-  height: 210px;
-  position: absolute;
-  bottom: -22px;
-  left: 15px;
-  border-radius: 45% 45% 0 0;
-  background: #f6f7fc;
-  box-shadow: inset -45px 0 70px rgba(187, 198, 230, 0.42);
-}
-
-.portrait-coat::before,
-.portrait-coat::after {
-  width: 4px;
-  height: 85px;
-  position: absolute;
-  top: 12px;
-  background: #627bd3;
-  content: "";
-}
-
-.portrait-coat::before {
-  left: 78px;
-  transform: rotate(28deg);
-}
-
-.portrait-coat::after {
-  right: 78px;
-  transform: rotate(-28deg);
-}
-
-.portrait-cross {
-  width: 52px;
-  height: 52px;
-  position: absolute;
-  top: 108px;
-  left: 99px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  font-size: 1.8rem;
-  box-shadow: 0 8px 20px rgba(73, 103, 200, 0.24);
 }
 
 .home-care-card,
