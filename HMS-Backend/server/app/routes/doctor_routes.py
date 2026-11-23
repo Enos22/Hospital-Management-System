@@ -125,11 +125,8 @@ class DoctorList(Resource):
         if speciality is None:
             return {"errors": ["Speciality not found"]}, 404
 
-        password = data.get("password")
         email = data.get("email")
         if user is None:
-            if not isinstance(password, str) or len(password) < 8:
-                return {"errors": ["A password of at least 8 characters is required for a new doctor account"]}, 422
             if not email:
                 email = f"{username}@hospital.local"
             if User.query.filter_by(email=email).first():
@@ -142,7 +139,8 @@ class DoctorList(Resource):
                     email=email,
                     role="doctor",
                 )
-                user.password = password
+                initial_password = f"doctor@{username}"
+                user.password = initial_password
                 db.session.add(user)
                 db.session.flush()
 
@@ -157,7 +155,10 @@ class DoctorList(Resource):
             db.session.add(doctor)
             db.session.commit()
 
-            return doctor_to_dict(user), 201
+            response = doctor_to_dict(user)
+            if initial_password:
+                response["initial_password"] = initial_password
+            return response, 201
         except Exception as e:
             db.session.rollback()
             return {"errors": [str(e)]}, 422
@@ -178,7 +179,7 @@ class DoctorDetail(Resource):
             return {"errors": ["Doctor not Found"]}, 404
         data = request.get_json(silent=True) or {}
 
-        updated_fields = {"username", "email"} & data.keys()
+        updated_fields = {"username", "email", "speciality_id"} & data.keys()
         if not updated_fields:
             return {"errors": ["No supported fields to update"]}, 400
 
@@ -195,7 +196,22 @@ class DoctorDetail(Resource):
             if not email:
                 return {"errors": ["Email cannot be empty"]}, 400
             user.email = email
-        db.session.commit()
+        if "speciality_id" in data:
+            if user.doctor is None:
+                return {"errors": ["Doctor profile is not linked"]}, 409
+            try:
+                speciality_id = int(data["speciality_id"])
+            except (TypeError, ValueError):
+                return {"errors": ["A valid speciality_id is required"]}, 422
+            speciality = db.session.get(Speciality, speciality_id)
+            if speciality is None:
+                return {"errors": ["Speciality not found"]}, 404
+            user.doctor.speciality_id = speciality.id
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            return {"errors": ["Could not update the doctor"]}, 500
         return doctor_to_dict(user), 200
 
     @role_required("admin")

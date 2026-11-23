@@ -1,1 +1,4 @@
-{}
+{
+  "tests/test_doctors.py::test_admin_can_link_existing_doctor_account_to_profile": true,
+  "tests/test_doctors.py::test_new_doctor_gets_default_password_and_is_required_to_change_it": true
+}

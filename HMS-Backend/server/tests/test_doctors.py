@@ -192,7 +192,30 @@ def test_speciality_list_requires_admin(client, make_user, token_for):
     assert response.status_code == 403
 
 
-def test_new_doctor_requires_secure_password(client, make_user, token_for):
+def test_admin_can_change_doctor_speciality(client, make_user, token_for):
+    admin, _ = make_user("admin", username="change-speciality-admin")
+    doctor, _ = make_user("doctor", username="change-speciality-doctor")
+    old_speciality = doctor.doctor.speciality
+    new_speciality = Speciality(name="Cardiology")
+    db.session.add(new_speciality)
+    db.session.commit()
+
+    response = client.patch(
+        f"/api/doctors/{doctor.id}",
+        headers={"Authorization": f"Bearer {token_for(admin)}"},
+        json={"speciality_id": new_speciality.id},
+    )
+
+    assert response.status_code == 200
+    updated = response.get_json()
+    assert old_speciality.id != new_speciality.id
+    assert updated["speciality_id"] == new_speciality.id
+    assert updated["speciality"] == "Cardiology"
+
+
+def test_new_doctor_gets_default_password_and_is_required_to_change_it(
+    client, make_user, token_for
+):
     admin, _ = make_user("admin", username="doctor-password-admin")
     speciality = Speciality(name="General Medicine")
     db.session.add(speciality)
@@ -207,7 +230,42 @@ def test_new_doctor_requires_secure_password(client, make_user, token_for):
         },
     )
 
-    assert response.status_code == 422
+    assert response.status_code == 201
+    created = response.get_json()
+    initial_password = "doctor@new-doctor-no-password"
+    assert created["initial_password"] == initial_password
+
+    login = client.post(
+        "/api/auth/login",
+        json={
+            "username": "new-doctor-no-password",
+            "password": initial_password,
+        },
+    )
+    assert login.status_code == 200
+    login_data = login.get_json()
+    assert login_data["must_change_password"] is True
+
+    headers = {"Authorization": f"Bearer {login_data['access_token']}"}
+    protected = client.get("/api/doctors", headers=headers)
+    assert protected.status_code == 403
+
+    changed = client.post(
+        "/api/auth/change-password",
+        headers=headers,
+        json={
+            "current_password": initial_password,
+            "new_password": "Doctor-safe-pass-2026",
+        },
+    )
+    assert changed.status_code == 200
+    changed_data = changed.get_json()
+    assert changed_data["must_change_password"] is False
+
+    updated_headers = {
+        "Authorization": f"Bearer {changed_data['access_token']}"
+    }
+    assert client.get("/api/doctors", headers=updated_headers).status_code == 200
 
 
 def test_doctor_list_includes_clinical_profile_id(client, make_user, token_for):

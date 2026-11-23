@@ -1,6 +1,11 @@
 from flask import request
 from flask_restful import Resource
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
+from flask_jwt_extended import (
+    create_access_token,
+    jwt_required,
+    get_jwt_identity,
+    get_jwt,
+)
 from app.extensions import db
 from app.models.user import User
 from app.schemas.user_schema import user_schema
@@ -157,12 +162,61 @@ class Login(Resource):
         password = data.get("password")
 
         if user and password and  user.authenticated(password):
+            must_change_password = (
+                user.role == "doctor" and password == f"doctor@{user.username}"
+            )
             token = create_access_token(
                 identity = str(user.id),
-                additional_claims = {"role": user.role}
+                additional_claims = {
+                    "role": user.role,
+                    "must_change_password": must_change_password,
+                }
             )
-            return {**user_with_profile_ids(user), "access_token": token}, 200
+            return {
+                **user_with_profile_ids(user),
+                "access_token": token,
+                "must_change_password": must_change_password,
+            }, 200
         return {"errors": ["Invalid Username or Password"]}, 401
+
+
+class ChangePassword(Resource):
+    @jwt_required()
+    def post(self):
+        user = db.session.get(User, int(get_jwt_identity()))
+        if user is None:
+            return {"errors": ["Authentication required"]}, 401
+
+        data = request.get_json(silent=True) or {}
+        current_password = data.get("current_password")
+        new_password = data.get("new_password")
+
+        if not isinstance(current_password, str) or not user.authenticated(current_password):
+            return {"errors": ["Current password is incorrect"]}, 400
+        if not isinstance(new_password, str) or len(new_password) < 8:
+            return {"errors": ["New password must be at least 8 characters"]}, 422
+        if user.authenticated(new_password):
+            return {"errors": ["New password must be different from the current password"]}, 422
+
+        user.password = new_password
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            return {"errors": ["Could not update password"]}, 500
+
+        token = create_access_token(
+            identity=str(user.id),
+            additional_claims={
+                "role": user.role,
+                "must_change_password": False,
+            },
+        )
+        return {
+            **user_with_profile_ids(user),
+            "access_token": token,
+            "must_change_password": False,
+        }, 200
 
 class Logout(Resource):
     def delete(self):
@@ -178,4 +232,7 @@ class Checksession(Resource):
         if user is None:
             return {"errors": ["Authentication required"]}, 401
 
-        return user_with_profile_ids(user), 200
+        return {
+            **user_with_profile_ids(user),
+            "must_change_password": bool(get_jwt().get("must_change_password")),
+        }, 200
