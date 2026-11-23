@@ -164,6 +164,8 @@ export default function PatientsPage() {
           name,
           age: Number(form.get('age')),
           gender: form.get('gender'),
+          phone_number: form.get('phone_number').trim(),
+          address: form.get('address').trim(),
         }),
       });
 
@@ -385,6 +387,25 @@ export default function PatientsPage() {
               <option value="Female">Female</option>
               <option value="Other">Other</option>
             </select>
+          </label>
+
+          <label>
+            Phone number
+            <input
+              name="phone_number"
+              type="tel"
+              maxLength={15}
+              defaultValue={editingPatient.phone_number ?? ''}
+            />
+          </label>
+
+          <label>
+            Address
+            <textarea
+              name="address"
+              maxLength={200}
+              defaultValue={editingPatient.address ?? ''}
+            />
           </label>
 
           <button type="submit">Save changes</button>
