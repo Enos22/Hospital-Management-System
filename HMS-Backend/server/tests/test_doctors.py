@@ -225,3 +225,23 @@ def test_doctor_list_includes_clinical_profile_id(client, make_user, token_for):
         item for item in response.get_json() if item["user_id"] == doctor.id
     )
     assert listed_doctor["doctor_id"] == doctor_profile_id
+
+
+def test_admin_can_delete_doctor_without_linked_records(
+    app, client, make_user, token_for
+):
+    admin, _ = make_user("admin", username="delete-doctor-admin")
+    doctor_user, _ = make_user("doctor", username="delete-doctor-user")
+    assert doctor_user.doctor is not None
+    doctor_profile_id = doctor_user.doctor.id
+    headers = {"Authorization": f"Bearer {token_for(admin)}"}
+
+    response = client.delete(
+        f"/api/doctors/{doctor_user.id}",
+        headers=headers,
+    )
+
+    assert response.status_code == 204
+    with app.app_context():
+        assert db.session.get(User, doctor_user.id) is None
+        assert db.session.get(Doctor, doctor_profile_id) is None

@@ -3,6 +3,7 @@ import pytest
 from app.extensions import db
 from app.models.user import User
 from app.models.patient import Patient
+from app.models.medical_record import MedicalRecord
 
 
 def test_patient_profile_is_owner_scoped(client, make_user, token_for):
@@ -118,6 +119,53 @@ def test_admin_can_repair_patient_without_profile(
     assert patient_data["user_id"] == user_id
     assert patient_data["patient_id"] is not None
     assert patient_data["name"] == "Legacy Patient"
+
+
+def test_admin_can_delete_patient_without_linked_records(
+    app, client, make_user, token_for
+):
+    admin, _ = make_user("admin", username="delete-patient-admin")
+    patient_user, patient_profile = make_user(
+        "patient", username="delete-patient-user"
+    )
+    assert patient_user.patient is patient_profile
+    user_id = patient_user.id
+    patient_id = patient_profile.id
+
+    response = client.delete(
+        f"/api/patients/{user_id}",
+        headers={"Authorization": f"Bearer {token_for(admin)}"},
+    )
+
+    assert response.status_code == 204
+    with app.app_context():
+        assert db.session.get(User, user_id) is None
+        assert db.session.get(Patient, patient_id) is None
+
+
+def test_admin_cannot_delete_patient_with_medical_history(
+    app, client, make_user, token_for
+):
+    admin, _ = make_user("admin", username="keep-history-admin")
+    patient_user, patient_profile = make_user(
+        "patient", username="keep-history-patient"
+    )
+    db.session.add(
+        MedicalRecord(
+            patient_id=patient_profile.id,
+            diagnosis="Existing diagnosis",
+            treatment="Existing treatment",
+        )
+    )
+    db.session.commit()
+
+    response = client.delete(
+        f"/api/patients/{patient_user.id}",
+        headers={"Authorization": f"Bearer {token_for(admin)}"},
+    )
+
+    assert response.status_code == 409
+    assert "clinical or billing records" in response.get_json()["errors"][0]
 
 
 def test_create_patient(app):

@@ -4,9 +4,17 @@ from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 from app.extensions import db
 from app.models.user import User
 from app.models.patient import Patient
+from app.models.appointment import Appointment
+from app.models.invoice import Invoice
+from app.models.lab_request import LabRequest
+from app.models.lab_result import LabResult
+from app.models.medical_record import MedicalRecord
+from app.models.notification import Notification
+from app.models.payment import Payment
+from app.models.prescription import Prescription
 from app.schemas.user_schema import user_schema
 from app.middleware.role_middleware import role_required
-from sqlalchemy import or_
+from sqlalchemy import delete, or_
 from sqlalchemy.orm import joinedload
 
 
@@ -247,12 +255,48 @@ class PatientDetail(Resource):
 
         if not user or user.role != "patient":
             return {"errors": ["Patient Not FoUnd"]}, 404
+
+        patient = Patient.query.filter_by(user_id=user.id).first()
+        if patient:
+            has_clinical_history = any(
+                model.query.filter_by(patient_id=patient.id).first()
+                for model in (
+                    Appointment,
+                    Invoice,
+                    LabRequest,
+                    LabResult,
+                    MedicalRecord,
+                    Prescription,
+                )
+            )
+            if has_clinical_history:
+                return {
+                    "errors": [
+                        "Cannot delete this patient because clinical or billing records are linked to the profile."
+                    ]
+                }, 409
+
+        if Payment.query.filter_by(user_id=user.id).first():
+            return {
+                "errors": [
+                    "Cannot delete this patient because payment history is linked to the account."
+                ]
+            }, 409
+
         try:
-            db.session.delete(user)
+            Notification.query.filter_by(user_id=user.id).delete(
+                synchronize_session=False
+            )
+            Payment.query.filter_by(received_by=user.id).update(
+                {"received_by": None}, synchronize_session=False
+            )
+            Invoice.query.filter_by(created_by=user.id).update(
+                {"created_by": None}, synchronize_session=False
+            )
+            db.session.execute(delete(Patient).where(Patient.user_id == user.id))
+            db.session.execute(delete(User).where(User.id == user.id))
             db.session.commit()
             return {}, 204
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            return {"errors": [str(e)]}, 422
-
-        # implement patient deletion via DELETE endpoint
+            return {"errors": ["Could not delete the patient account."]}, 500

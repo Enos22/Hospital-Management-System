@@ -6,11 +6,18 @@ from flask_restful import Resource
 
 from app.extensions import db
 from app.models.doctor import Doctor
+from app.models.appointment import Appointment
+from app.models.invoice import Invoice
+from app.models.lab_request import LabRequest
+from app.models.notification import Notification
+from app.models.payment import Payment
+from app.models.prescription import Prescription
 from app.models.speciality import Speciality
 from app.models.user import User
 from app.middleware.role_middleware import role_required
 from app.schemas.user_schema import user_schema
 from sqlalchemy.orm import joinedload
+from sqlalchemy import delete
 
 
 def doctor_to_dict(user):
@@ -198,11 +205,39 @@ class DoctorDetail(Resource):
         if not user or user.role != "doctor":
             return {"errors": ["Doctor not Found"]}, 404
 
+        doctor = Doctor.query.filter_by(user_id=user.id).first()
+        if doctor and any(
+            model.query.filter_by(doctor_id=doctor.id).first()
+            for model in (Appointment, LabRequest, Prescription)
+        ):
+            return {
+                "errors": [
+                    "Cannot delete this doctor because clinical records are linked to the profile."
+                ]
+            }, 409
+
+        if Payment.query.filter_by(user_id=user.id).first():
+            return {
+                "errors": [
+                    "Cannot delete this doctor because payment history is linked to the account."
+                ]
+            }, 409
+
         try:
-            db.session.delete(user)
+            Notification.query.filter_by(user_id=user.id).delete(
+                synchronize_session=False
+            )
+            Payment.query.filter_by(received_by=user.id).update(
+                {"received_by": None}, synchronize_session=False
+            )
+            Invoice.query.filter_by(created_by=user.id).update(
+                {"created_by": None}, synchronize_session=False
+            )
+            db.session.execute(delete(Doctor).where(Doctor.user_id == user.id))
+            db.session.execute(delete(User).where(User.id == user.id))
             db.session.commit()
-            return{}, 204
-        except Exception as e:
+            return {}, 204
+        except Exception:
             db.session.rollback()
-            return {"errors": ["Could not delete Doctor, They may have Active Records to their Account"]}, 409
+            return {"errors": ["Could not delete the doctor account."]}, 500
         

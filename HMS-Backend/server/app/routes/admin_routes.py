@@ -4,6 +4,9 @@ from app.extensions import db
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from app.models.user import User
+from app.models.invoice import Invoice
+from app.models.notification import Notification
+from app.models.payment import Payment
 from app.schemas.user_schema import user_schema, users_schema
 from app.middleware.role_middleware import role_required
 from flask_jwt_extended import get_jwt_identity
@@ -91,13 +94,35 @@ class AdminUserDetail(Resource):
         if str(user.id) == str(current_user_id):
             return {"errors":["You cannot delete your own account"]}, 403
 
+        if user.doctor or user.patient:
+            return {
+                "errors": [
+                    "Cannot delete this account while it is linked to a doctor or patient profile."
+                ]
+            }, 409
+
+        if Payment.query.filter_by(user_id=user.id).first():
+            return {
+                "errors": [
+                    "Cannot delete this account because it has payment history."
+                ]
+            }, 409
+
         try:
+            Notification.query.filter_by(user_id=user.id).delete(
+                synchronize_session=False
+            )
+            Payment.query.filter_by(received_by=user.id).update(
+                {"received_by": None}, synchronize_session=False
+            )
+            Invoice.query.filter_by(created_by=user.id).update(
+                {"created_by": None}, synchronize_session=False
+            )
             db.session.delete(user)
             db.session.commit()
 
         except SQLAlchemyError:
             db.session.rollback()
-           
-            return {"errors":["Database error deleting user"]}, 500
+            return {"errors": ["Database error deleting user"]}, 500
 
         return {}, 204
