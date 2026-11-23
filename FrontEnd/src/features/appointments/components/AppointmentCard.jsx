@@ -14,7 +14,7 @@ export default function AppointmentCard({
   return (
     <article className="appointment-card">
       <div>
-        <h3>Appointment #{appointment.id}</h3>
+        <h3>Appointment {appointment.id}</h3>
         <p>{date} at {time}</p>
         <p>Status: {appointment.status || "scheduled"}</p>
         {userRole !== "patient" && <p>Patient: {appointment.patient_id}</p>}

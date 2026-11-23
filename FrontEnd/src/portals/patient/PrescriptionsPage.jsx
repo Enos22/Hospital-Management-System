@@ -45,7 +45,7 @@ export default function PrescriptionsPage() {
           {prescriptions.map((prescription) => (
             <article className="prescription-card" key={prescription.id}>
               <h2>
-                Medicine #{prescription.medicine_id || "Not specified"}
+                {prescription.medicine_name || "Medicine not specified"}
               </h2>
 
               <p>
