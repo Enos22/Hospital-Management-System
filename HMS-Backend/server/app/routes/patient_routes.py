@@ -168,6 +168,34 @@ class PatientDetail(Resource):
         if not user or user.role != "patient":
             return {"errors": ["Patient Not Found"]}, 404
         role = get_jwt().get("role")
+        if role == "doctor":
+            data = request.get_json(silent=True) or {}
+            if not data:
+                return {"errors": ["No update data provided"]}, 400
+            allowed_fields = {"phone_number", "address"}
+            if not set(data).issubset(allowed_fields):
+                return {
+                    "errors": ["Doctors may update only patient phone number and address"]
+                }, 403
+            if user.patient is None:
+                return {"errors": ["Patient profile not found"]}, 404
+
+            patient_details, validation_error = validate_patient_details(
+                data,
+                require_all=False,
+            )
+            if validation_error:
+                return {"errors": [validation_error]}, 422
+            try:
+                for field in allowed_fields:
+                    if field in data:
+                        setattr(user.patient, field, patient_details[field])
+                db.session.commit()
+                return patient_to_dict(user), 200
+            except Exception as e:
+                db.session.rollback()
+                return {"errors": [str(e)]}, 422
+
         if role != "admin" and not (
             role == "patient" and str(user.id) == str(get_jwt_identity())
         ):

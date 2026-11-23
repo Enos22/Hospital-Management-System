@@ -66,6 +66,32 @@ def test_patient_list_includes_clinical_profile_id(client, make_user, token_for)
     assert listed_patient["patient_id"] == patient_profile.id
 
 
+def test_doctor_can_update_patient_contact_details_only(
+    client, make_user, token_for
+):
+    doctor, _ = make_user("doctor", username="contact-update-doctor")
+    patient, _ = make_user("patient", username="contact-update-patient")
+    doctor_headers = {"Authorization": f"Bearer {token_for(doctor)}"}
+
+    updated = client.patch(
+        f"/api/patients/{patient.id}",
+        headers=doctor_headers,
+        json={"phone_number": "+254700123456", "address": "Nairobi"},
+    )
+
+    assert updated.status_code == 200
+    assert updated.get_json()["phone_number"] == "+254700123456"
+    assert updated.get_json()["address"] == "Nairobi"
+
+    denied = client.patch(
+        f"/api/patients/{patient.id}",
+        headers=doctor_headers,
+        json={"username": "changed-by-doctor"},
+    )
+
+    assert denied.status_code == 403
+
+
 def test_admin_can_repair_patient_without_profile(
     client, app, make_user, token_for
 ):
