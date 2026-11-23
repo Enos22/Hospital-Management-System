@@ -2,6 +2,7 @@
  * TODO: Present the searchable patient-account directory.
  */
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { get } from "../../lib/api/client";
 
 const PAGE_SIZE = 8;
@@ -104,7 +105,7 @@ export default function PatientsPage() {
                 <p>Account ID: {patient.id}</p>
               </div>
 
-              <a href={`/doctor/patients/${patient.id}`}>View details</a>
+              <Link to={`/doctor/patients/${patient.id}`}>View details</Link>
             </article>
           ))
         )}

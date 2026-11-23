@@ -50,6 +50,8 @@ def patient_to_dict(user):
             "name": profile.name if profile else user.username,
             "age": profile.age if profile else None,
             "gender": profile.gender if profile else None,
+            "phone_number": profile.phone_number if profile else None,
+            "address": profile.address if profile else None,
         }
     )
     return patient_data
