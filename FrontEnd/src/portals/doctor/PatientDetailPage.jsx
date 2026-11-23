@@ -6,14 +6,18 @@ import { Link, useParams } from "react-router-dom";
 import { get } from "../../lib/api/client";
 
 export default function PatientDetailPage() {
-  const { id } = useParams();
+  const { patientId } = useParams();
 
   const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!id) return;
+    if (!patientId) {
+      setLoading(false);
+      setError("Patient ID is missing.");
+      return;
+    }
 
     let active = true;
 
@@ -22,7 +26,7 @@ export default function PatientDetailPage() {
       setError("");
 
       try {
-        const response = await get(`/api/patients/${id}`);
+        const response = await get(`/api/patients/${patientId}`);
         const data = response?.patient || response?.data || response;
         if (active) setPatient(data);
       } catch (err) {
@@ -36,7 +40,7 @@ export default function PatientDetailPage() {
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [patientId]);
 
   if (loading) {
     return <p className="loading-state">Loading patient details...</p>;
