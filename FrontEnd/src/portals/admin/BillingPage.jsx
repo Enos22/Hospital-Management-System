@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getApiErrorMessage } from '../../lib/api/errors';
 import { getApiUrl, getToken } from '../../lib/api/client';
+import DetailList from '../../components/feedback/DetailList';
 
 const endpoints = {
   invoices: '/api/billing/invoices',
@@ -379,7 +380,7 @@ export default function BillingPage() {
       {invoiceDetails && (
         <section>
           <h2>Invoice details</h2>
-          <pre>{JSON.stringify(invoiceDetails, null, 2)}</pre>
+          <DetailList data={invoiceDetails} />
           <button type="button" onClick={() => setInvoiceDetails(null)}>
             Close details
           </button>
@@ -389,7 +390,7 @@ export default function BillingPage() {
       {(view === 'revenue' || view === 'payments') && payload && (
         <section>
           <h2>{view === 'revenue' ? 'Revenue report' : 'Payments report'}</h2>
-          <pre>{JSON.stringify(payload, null, 2)}</pre>
+          <DetailList data={payload?.data ?? payload} />
         </section>
       )}
     </section>

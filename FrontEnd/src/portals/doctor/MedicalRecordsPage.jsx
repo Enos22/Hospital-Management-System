@@ -3,6 +3,7 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { get, post, patch } from "../../lib/api/client";
+import { formatDate } from "../../lib/format/FormatDate.js";
 
 const EMPTY_FORM = {
   patient_id: "",
@@ -178,7 +179,7 @@ export default function MedicalRecordsPage() {
               <p><strong>Record ID:</strong> {record.id}</p>
               <p><strong>Patient profile ID:</strong> {record.patient_id}</p>
               <p><strong>Treatment:</strong> {record.treatment || "Not provided"}</p>
-              <p><strong>Date:</strong> {record.record_date || "Not available"}</p>
+              <p><strong>Date:</strong> {record.record_date ? formatDate(record.record_date) : "Not available"}</p>
 
               <button type="button" onClick={() => startEditing(record)}>
                 Edit record

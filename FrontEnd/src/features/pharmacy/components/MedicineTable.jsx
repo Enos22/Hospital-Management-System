@@ -2,7 +2,7 @@ import Badge from "../../../components/ui/Badge.jsx";
 import Button from "../../../components/ui/Button.jsx";
 import EmptyState from "../../../components/feedback/EmptyState.jsx";
 import { formatCurrency } from "../../../lib/format/formatCurrency.js";
-import { formatDate } from "../../../lib/format/formatDate.js";
+import { formatDate } from "../../../lib/format/FormatDate.js";
 
 function stockVariant(quantity) {
   if (quantity <= 0) return "danger";

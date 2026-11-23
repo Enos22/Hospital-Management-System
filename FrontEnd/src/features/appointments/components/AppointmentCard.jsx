@@ -1,4 +1,5 @@
 import Button from "../../../components/ui/Button.jsx";
+import { formatDate, formatTime } from "../../../lib/format/FormatDate.js";
 
 export default function AppointmentCard({
   appointment,
@@ -7,9 +8,9 @@ export default function AppointmentCard({
   cancelling = false,
 }) {
   const date = appointment.appointment_date
-    ? String(appointment.appointment_date).slice(0, 10)
+    ? formatDate(String(appointment.appointment_date).slice(0, 10))
     : "Date unavailable";
-  const time = appointment.appointment_time || appointment.start_time || "Time unavailable";
+  const time = formatTime(appointment.appointment_time || appointment.start_time);
 
   return (
     <article className="appointment-card">

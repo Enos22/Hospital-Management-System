@@ -28,7 +28,7 @@ export function normalizeError(error, status) {
     }
   }
 
-  return {
+   return {
     message,
     details,
     status: status || null,

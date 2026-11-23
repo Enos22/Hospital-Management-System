@@ -1,18 +1,5 @@
 import { usePrescriptions } from "../../features/prescriptions/hooks/usePrescriptions";
-
-function formatDate(value) {
-  if (!value) return "Date unavailable";
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) return "Date unavailable";
-
-  return date.toLocaleDateString("en-KE", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
+import { formatDate } from "../../lib/format/FormatDate.js";
 
 export default function PrescriptionsPage() {
   const {

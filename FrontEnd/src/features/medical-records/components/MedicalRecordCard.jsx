@@ -1,4 +1,5 @@
 import React from "react";
+import { formatDate } from "../../../lib/format/FormatDate.js";
 
 function MedicalRecordCard({ record, onView }) {
   if (!record) return null;
@@ -8,7 +9,7 @@ function MedicalRecordCard({ record, onView }) {
       <div className="medical-record-header">
         <h3>{record.diagnosis || "Medical Record"}</h3>
         <span>{record.created_at
-          ? new Date(record.created_at).toLocaleDateString()
+          ? formatDate(record.created_at)
           : "Date unavailable"}
         </span>
       </div>

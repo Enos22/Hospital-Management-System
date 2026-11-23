@@ -1,12 +1,8 @@
 import React from "react";
+import { formatDate } from "../../../lib/format/FormatDate.js";
 
 function PrescriptionCard({ prescription, onView }) {
   if (!prescription) return null;
-
-  const formatDate = (date) => {
-    if (!date) return "Not available";
-    return new Date(date).toLocaleDateString();
-  };
 
   return (
     <article className="prescription-card">
@@ -18,7 +14,7 @@ function PrescriptionCard({ prescription, onView }) {
       <p><strong>Dosage:</strong> {prescription.dosage}</p>
       <p><strong>Frequency:</strong> {prescription.frequency}</p>
       <p><strong>Duration:</strong> {prescription.duration}</p>
-      <p><strong>Date created:</strong> {formatDate(prescription.created_at)}</p>
+      <p><strong>Date created:</strong> {prescription.created_at ? formatDate(prescription.created_at) : "Not available"}</p>
 
       {onView && (
         <button type="button" onClick={() => onView(prescription)}>

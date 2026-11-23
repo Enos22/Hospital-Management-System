@@ -2,6 +2,7 @@
  * TODO: Present account listing and supported user-role management.
  */
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { getToken } from "../../lib/api/client";
 
 const API_BASE_URL = import.meta.env.DEV
@@ -9,7 +10,9 @@ const API_BASE_URL = import.meta.env.DEV
   : import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "");
 
 export default function UsersPage() {
-  const [roleFilter, setRoleFilter] = useState("");
+  const [searchParams] = useSearchParams();
+  const initialRole = searchParams.get("role") ?? "";
+  const [roleFilter, setRoleFilter] = useState(initialRole);
   const [userId, setUserId] = useState("");
   const [newRole, setNewRole] = useState("doctor");
 
@@ -39,7 +42,10 @@ export default function UsersPage() {
 
     if (!response.ok) {
       throw new Error(
-        data?.message || data?.error || `Request failed (${response.status})`
+        data?.message ||
+          data?.error ||
+        (Array.isArray(data?.errors) ? data.errors.join(" ") : null) ||
+          `Request failed (${response.status})`
       );
     }
 
@@ -324,6 +330,11 @@ export default function UsersPage() {
 
       <section>
         <h2>Delete a user</h2>
+        <p>
+          Select an account with Manage or enter its ID. Only standalone
+          accounts without linked patient or doctor profiles or payment history
+          can be deleted.
+        </p>
         <label>
           User ID
           <input

@@ -9,19 +9,7 @@ import { useMedicalRecords } from "../../features/medical-records/hooks/useMedic
 import { usePrescriptions } from "../../features/prescriptions/hooks/usePrescriptions";
 import { get, patch } from "../../lib/api/client";
 import { useAuth } from "../../lib/auth/AuthContext.jsx";
-
-function formatDate(value) {
-  if (!value) return "Date unavailable";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Date unavailable";
-
-  return date.toLocaleDateString("en-KE", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
+import { formatDate, formatTime } from "../../lib/format/FormatDate.js";
 
 function getAppointmentDateValue(appointment) {
   return appointment.appointment_date || appointment.appointmentDate;
@@ -228,10 +216,9 @@ export default function HomePage() {
         )}
 
         {upcomingAppointments.slice(0, 5).map((appointment) => {
-          const time =
-            appointment.appointment_time ||
-            appointment.start_time ||
-            "Not provided";
+          const rawTime =
+            appointment.appointment_time || appointment.start_time;
+          const time = rawTime ? formatTime(rawTime) : "Not provided";
 
           return (
             <article className="appointment-summary" key={appointment.id}>

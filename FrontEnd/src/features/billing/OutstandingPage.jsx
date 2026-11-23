@@ -1,4 +1,5 @@
 import { useOutstandingInvoices } from "./hooks/useBilling";
+import { formatDate } from "../../lib/format/FormatDate.js";
 
 function formatAmount(value) {
   const amount = Number(value);
@@ -10,11 +11,6 @@ function formatAmount(value) {
     : "—";
 }
 
-function formatDate(value) {
-  if (!value) return "—";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString();
-}
 
 function getErrorMessage(error) {
   return error instanceof Error ? error.message : "Something went wrong.";

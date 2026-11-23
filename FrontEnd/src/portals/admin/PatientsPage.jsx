@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getApiErrorMessage } from '../../lib/api/errors';
 import { getApiUrl, getToken } from '../../lib/api/client';
+import DetailList from '../../components/feedback/DetailList';
 
 async function apiRequest(path, options = {}) {
   const token = getToken();
@@ -418,7 +419,7 @@ export default function PatientsPage() {
       {patientDetails && (
         <section>
           <h2>Patient details</h2>
-          <pre>{JSON.stringify(patientDetails, null, 2)}</pre>
+          <DetailList data={patientDetails} />
           <button type="button" onClick={() => setPatientDetails(null)}>
             Close details
           </button>

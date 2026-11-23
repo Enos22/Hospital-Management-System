@@ -3,6 +3,7 @@
  */
 import { useEffect, useState } from "react";
 import { getToken } from "../../lib/api/client";
+import DetailList from "../../components/feedback/DetailList";
 
 const API_BASE_URL = import.meta.env.DEV
   ? ""
@@ -10,9 +11,10 @@ const API_BASE_URL = import.meta.env.DEV
 
 export default function ReportsPage() {
   const [invoiceId, setInvoiceId] = useState("");
-  const [invoiceJson, setInvoiceJson] = useState(
-    '{"patient_id":1,"items":[{"description":"Consultation","quantity":1,"unit_price":0}]}'
-  );
+  const [patientId, setPatientId] = useState("");
+  const [itemDescription, setItemDescription] = useState("");
+  const [quantity, setQuantity] = useState("1");
+  const [unitPrice, setUnitPrice] = useState("");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
 
@@ -78,13 +80,40 @@ export default function ReportsPage() {
   async function createInvoice(event) {
     event.preventDefault();
 
-    let body;
-    try {
-      body = JSON.parse(invoiceJson);
-    } catch {
-      setError("Invoice body must be valid JSON.");
+    const parsedPatientId = Number(patientId);
+    const parsedQuantity = Number(quantity);
+    const parsedUnitPrice = Number(unitPrice);
+
+    if (!Number.isInteger(parsedPatientId) || parsedPatientId < 1) {
+      setError("Enter a valid patient profile ID.");
       return;
     }
+
+    if (!itemDescription.trim()) {
+      setError("Enter an item description.");
+      return;
+    }
+
+    if (!Number.isInteger(parsedQuantity) || parsedQuantity < 1) {
+      setError("Quantity must be at least 1.");
+      return;
+    }
+
+    if (!Number.isFinite(parsedUnitPrice) || parsedUnitPrice < 0) {
+      setError("Enter a valid unit price.");
+      return;
+    }
+
+    const body = {
+      patient_id: parsedPatientId,
+      items: [
+        {
+          description: itemDescription.trim(),
+          quantity: parsedQuantity,
+          unit_price: parsedUnitPrice,
+        },
+      ],
+    };
 
     const data = await runRequest(
       () =>
@@ -95,7 +124,13 @@ export default function ReportsPage() {
       "Invoice created."
     );
 
-    if (data !== null) await loadInvoices();
+    if (data !== null) {
+      setPatientId("");
+      setItemDescription("");
+      setQuantity("1");
+      setUnitPrice("");
+      await loadInvoices();
+    }
   }
 
   async function viewInvoice(event) {
@@ -193,20 +228,63 @@ export default function ReportsPage() {
         <button type="button" onClick={loadInvoices} disabled={loading}>
           List invoices
         </button>
-        {invoices !== null && <pre>{JSON.stringify(invoices, null, 2)}</pre>}
+        {invoices !== null && (
+          <DetailList
+            data={invoices?.data ?? invoices?.invoices ?? invoices}
+          />
+        )}
       </section>
 
       <section>
         <h2>Create invoice</h2>
         <form onSubmit={createInvoice}>
-          <label htmlFor="invoice-json">Invoice JSON</label>
-          <textarea
-            id="invoice-json"
-            rows={8}
-            value={invoiceJson}
-            onChange={(event) => setInvoiceJson(event.target.value)}
-            required
-          />
+          <label>
+            Patient profile ID
+            <input
+              type="number"
+              min="1"
+              value={patientId}
+              onChange={(event) => setPatientId(event.target.value)}
+              placeholder="Enter patient profile ID"
+              required
+            />
+          </label>
+
+          <label>
+            Item description
+            <input
+              type="text"
+              value={itemDescription}
+              onChange={(event) => setItemDescription(event.target.value)}
+              placeholder="e.g. Consultation"
+              required
+            />
+          </label>
+
+          <label>
+            Quantity
+            <input
+              type="number"
+              min="1"
+              value={quantity}
+              onChange={(event) => setQuantity(event.target.value)}
+              required
+            />
+          </label>
+
+          <label>
+            Unit price
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={unitPrice}
+              onChange={(event) => setUnitPrice(event.target.value)}
+              placeholder="0.00"
+              required
+            />
+          </label>
+
           <button type="submit" disabled={loading}>
             Create invoice
           </button>
@@ -281,7 +359,7 @@ export default function ReportsPage() {
       {output !== null && (
         <section>
           <h2>Latest response</h2>
-          <pre>{JSON.stringify(output, null, 2)}</pre>
+          <DetailList data={output?.data ?? output} />
         </section>
       )}
     </main>
