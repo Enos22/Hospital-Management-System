@@ -11,12 +11,13 @@ from sqlalchemy.orm import joinedload
 
 
 def validate_patient_details(data, require_all=True):
-    fields = ("name", "age", "gender")
+    fields = ("name", "age", "gender", "phone_number", "address")
     values = {field: data.get(field) for field in fields}
 
-    if require_all and any(value in (None, "") for value in values.values()):
+    required_fields = ("name", "age", "gender")
+    if require_all and any(values[field] in (None, "") for field in required_fields):
         return None, "Name, age, and gender must all be provided"
-    if not require_all and not any(value is not None for value in values.values()):
+    if not require_all and not any(field in data for field in fields):
         return None, None
     if values["name"] is not None and (
         not isinstance(values["name"], str)
@@ -37,6 +38,19 @@ def validate_patient_details(data, require_all=True):
         or len(values["gender"]) > 10
     ):
         return None, "Gender must be between 1 and 10 characters"
+    if values["phone_number"] is not None and (
+        not isinstance(values["phone_number"], str)
+        or len(values["phone_number"].strip()) > 15
+    ):
+        return None, "Phone number must be 15 characters or fewer"
+    if values["address"] is not None and (
+        not isinstance(values["address"], str)
+        or len(values["address"].strip()) > 200
+    ):
+        return None, "Address must be 200 characters or fewer"
+    for field in ("phone_number", "address"):
+        if values[field] is not None:
+            values[field] = values[field].strip() or None
     return values, None
 
 
@@ -122,6 +136,8 @@ class PatientList(Resource):
                     name=patient_details["name"].strip(),
                     age=patient_details["age"],
                     gender=patient_details["gender"].strip(),
+                    phone_number=patient_details["phone_number"],
+                    address=patient_details["address"],
                 )
             )
             db.session.commit()
@@ -180,10 +196,12 @@ class PatientDetail(Resource):
                     name=patient_details["name"].strip(),
                     age=patient_details["age"],
                     gender=patient_details["gender"].strip(),
+                    phone_number=patient_details["phone_number"],
+                    address=patient_details["address"],
                 )
             elif patient_details:
                 for field, value in patient_details.items():
-                    if value is not None:
+                    if field in data:
                         setattr(
                             user.patient,
                             field,
