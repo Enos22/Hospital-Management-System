@@ -194,13 +194,15 @@ export default function DoctorsPage() {
     const form = new FormData(event.currentTarget);
     const username = form.get('username').trim();
     const email = form.get('email').trim();
+    const specialityId = form.get('speciality_id');
     const updates = {};
 
     if (username) updates.username = username;
     if (email) updates.email = email;
+    if (specialityId) updates.speciality_id = Number(specialityId);
 
     if (Object.keys(updates).length === 0) {
-      setError('Enter a username or email to update.');
+      setError('Enter a username, email, or speciality to update.');
       return;
     }
 
@@ -454,6 +456,26 @@ export default function DoctorsPage() {
               type="email"
               defaultValue={editingDoctor.email ?? ''}
             />
+          </label>
+
+          <label>
+            Speciality
+            <select
+              name="speciality_id"
+              defaultValue={editingDoctor.speciality_id ?? ''}
+              disabled={specialitiesLoading || specialities.length === 0}
+            >
+              <option value="" disabled>
+                {specialitiesLoading
+                  ? 'Loading specialities...'
+                  : 'Select speciality'}
+              </option>
+              {specialities.map((speciality) => (
+                <option key={speciality.id} value={speciality.id}>
+                  {speciality.name}
+                </option>
+              ))}
+            </select>
           </label>
 
           <button type="submit">Save changes</button>
