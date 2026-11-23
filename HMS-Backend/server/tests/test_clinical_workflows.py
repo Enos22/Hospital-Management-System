@@ -56,6 +56,12 @@ def test_patient_record_laboratory_and_prescription_access(
         f"/api/prescriptions/{prescription_id}", headers=patient_headers
     )
     assert own_prescription.status_code == 200
+    assert own_prescription.get_json()["prescription"]["medicine_name"] == "Allergy tablet"
+    patient_prescriptions = client.get(
+        "/api/prescriptions", headers=patient_headers
+    )
+    assert patient_prescriptions.status_code == 200
+    assert patient_prescriptions.get_json()["prescriptions"][0]["medicine_name"] == "Allergy tablet"
     denied_prescription = client.get(
         f"/api/prescriptions/{prescription_id}", headers=other_headers
     )
