@@ -22,7 +22,7 @@ export default function PatientDetailPage() {
       setError("");
 
       try {
-        const response = await get(`/patients/${id}`);
+        const response = await get(`/api/patients/${id}`);
         const data = response?.patient || response?.data || response;
         if (active) setPatient(data);
       } catch (err) {
@@ -57,9 +57,9 @@ export default function PatientDetailPage() {
     return <p className="empty-state">Patient not found.</p>;
   }
 
-  const profile = patient.patient || null;
+  const profile = patient.patient || patient;
   const profileId = patient.patient_id || profile?.id || null;
-  const displayName = profile?.name || patient.username || patient.name || "Patient";
+  const displayName = profile?.name || patient.username || "Patient";
 
   return (
     <section className="patient-detail-page">
