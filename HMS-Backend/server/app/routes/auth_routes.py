@@ -65,6 +65,8 @@ class Signup(Resource):
         patient_name = data.get("name")
         patient_age = data.get("age")
         patient_gender = data.get("gender")
+        patient_phone_number = data.get("phone_number")
+        patient_address = data.get("address")
         if not patient_name or patient_age in (None, "") or not patient_gender:
             return {
                 "errors": ["Name, age, and gender must all be provided"]
@@ -87,6 +89,26 @@ class Signup(Resource):
             or len(patient_gender) > 10
         ):
             return {"errors": ["Gender must be 10 characters or fewer"]}, 422
+        if patient_phone_number is not None and (
+            not isinstance(patient_phone_number, str)
+            or len(patient_phone_number.strip()) > 15
+        ):
+            return {"errors": ["Phone number must be 15 characters or fewer"]}, 422
+        if patient_address is not None and (
+            not isinstance(patient_address, str)
+            or len(patient_address.strip()) > 200
+        ):
+            return {"errors": ["Address must be 200 characters or fewer"]}, 422
+        patient_phone_number = (
+            patient_phone_number.strip() or None
+            if patient_phone_number is not None
+            else None
+        )
+        patient_address = (
+            patient_address.strip() or None
+            if patient_address is not None
+            else None
+        )
 
         if User.query.filter_by(username=username).first():
             return {"error": ["Username already Exists"]}, 422
@@ -109,7 +131,9 @@ class Signup(Resource):
                 user_id=user.id,
                 name=patient_name.strip(),
                 age=patient_age,
-                gender=patient_gender.strip()
+                gender=patient_gender.strip(),
+                phone_number=patient_phone_number,
+                address=patient_address,
             )
             db.session.add(patient)
 

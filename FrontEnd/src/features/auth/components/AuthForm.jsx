@@ -18,6 +18,8 @@ export function AuthForm({ mode = "login", onSubmit, loading, error }) {
             name: data.get("name"),
             age: Number(data.get("age")),
             gender: data.get("gender"),
+            phone_number: data.get("phone_number"),
+            address: data.get("address"),
           }),
         });
       }}
@@ -46,6 +48,25 @@ export function AuthForm({ mode = "login", onSubmit, loading, error }) {
               <option value="Male">Male</option>
               <option value="Female">Female</option>
             </select>
+          </label>
+
+          <label className="auth-form__field">
+            Phone number
+            <input
+              name="phone_number"
+              type="tel"
+              maxLength={15}
+              placeholder="Enter your phone number"
+            />
+          </label>
+
+          <label className="auth-form__field">
+            Address
+            <textarea
+              name="address"
+              maxLength={200}
+              placeholder="Enter your address"
+            />
           </label>
         </>
       )}

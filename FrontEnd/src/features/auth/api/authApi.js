@@ -34,6 +34,8 @@ export async function signupRequest({
   name,
   age,
   gender,
+  phone_number,
+  address,
 }) {
   const data = await apiRequest("/api/auth/signup", {
     method: "POST",
@@ -46,6 +48,8 @@ export async function signupRequest({
       ...(name !== undefined && { name }),
       ...(age !== undefined && { age }),
       ...(gender !== undefined && { gender }),
+      ...(phone_number !== undefined && { phone_number }),
+      ...(address !== undefined && { address }),
     },
     auth: false,
   });
