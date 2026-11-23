@@ -1,4 +1,5 @@
-import { useMedicalRecords } from "../../features/medical-records/hooks/useMedicalRecords";
+import { useAuth } from "../../lib/auth/AuthContext.jsx";
+import { usePatientMedicalHistory } from "../../features/medical-records/hooks/useMedicalRecords";
 
 function formatRecordDate(value) {
   if (!value) return "Date unavailable";
@@ -14,14 +15,28 @@ function formatRecordDate(value) {
 }
 
 export default function MedicalHistoryPage() {
-  const { records, medicalRecords, loading, error } = useMedicalRecords();
-
-  const recordList = records || medicalRecords || [];
+  const { user } = useAuth();
+  const patientId = user?.patient_id;
+  const { history, isLoading, error } = usePatientMedicalHistory(patientId);
 
   const errorMessage =
     typeof error === "string"
       ? error
       : error?.message || "Unable to load medical history.";
+
+  if (!patientId) {
+    return (
+      <main className="patient-page">
+        <section className="page-header">
+          <h1>Medical History</h1>
+          <p>Review your medical records and treatment history.</p>
+        </section>
+        <p className="error-message" role="alert">
+          Your patient profile is not available. Please contact the administrator.
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main className="patient-page">
@@ -30,7 +45,7 @@ export default function MedicalHistoryPage() {
         <p>Review your medical records and treatment history.</p>
       </section>
 
-      {loading && <p>Loading medical history...</p>}
+      {isLoading && <p>Loading medical history...</p>}
 
       {error && (
         <p className="error-message" role="alert">
@@ -38,12 +53,12 @@ export default function MedicalHistoryPage() {
         </p>
       )}
 
-      {!loading && !error && recordList.length === 0 && (
+      {!isLoading && !error && history.length === 0 && (
         <p>No medical records are currently available.</p>
       )}
 
       <section className="medical-record-list">
-        {recordList.map((record) => (
+        {history.map((record) => (
           <article className="medical-record-card" key={record.id}>
             <h2>{record.diagnosis || "Medical Record"}</h2>
 
