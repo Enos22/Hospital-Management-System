@@ -171,6 +171,8 @@ Protected endpoints require a JWT bearer token:
 ```http
 Authorization: Bearer <access_token>
 ```
+SYSTEM STRUCTURE 
+[![Architecture diagram of enos22/hospital-management-system](https://gitdiagram.com/enos22/hospital-management-system/diagram.png)](https://gitdiagram.com/enos22/hospital-management-system?utm_source=readme&utm_medium=picture)
 
 Obtain a token through the authentication endpoints documented in the API guide.
 Patient-specific routes are ownership-aware, while administrative and clinical
