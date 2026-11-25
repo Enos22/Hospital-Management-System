@@ -2966,3 +2966,768 @@ button:not(.auth-form button):not(.home-primary-action):not(.home-secondary-acti
 .auth-form__password .auth-form__toggle i {
   pointer-events: none;
 }
+
+/* AfyaCare welcome page: a warmer, more personal public-facing identity. */
+.home-page {
+  --home-forest: #244e46;
+  --home-forest-deep: #173c35;
+  --home-mint: #dcebe1;
+  --home-cream: #f7f5ee;
+  --home-peach: #f2d5c2;
+  background:
+    radial-gradient(ellipse at 86% 12%, rgba(232, 198, 169, 0.28), transparent 28rem),
+    var(--home-cream);
+  color: #263b36;
+}
+
+.home-header,
+.home-hero,
+.home-about {
+  width: min(1240px, calc(100% - 64px));
+}
+
+.home-header {
+  min-height: 92px;
+  border-bottom: 1px solid rgba(36, 78, 70, 0.1);
+}
+
+.home-brand {
+  color: var(--home-forest-deep);
+  font-size: 1.28rem;
+  letter-spacing: -0.045em;
+}
+
+.home-brand-mark {
+  width: 43px;
+  height: 43px;
+  border-radius: 15px 15px 15px 5px;
+  background: var(--home-forest);
+  box-shadow: 0 8px 18px rgba(36, 78, 70, 0.18);
+  transform: rotate(-3deg);
+}
+
+.home-nav {
+  order: 3;
+  gap: clamp(18px, 2.7vw, 34px);
+}
+
+.home-nav a {
+  color: #61736b;
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.home-nav a:hover,
+.home-nav .home-nav-login {
+  color: var(--home-forest);
+}
+
+.home-header-login {
+  order: 2;
+  margin-left: auto;
+  border-color: rgba(36, 78, 70, 0.2);
+  background: transparent;
+  color: var(--home-forest);
+}
+
+.home-header-login:hover {
+  border-color: var(--home-forest);
+  background: rgba(220, 235, 225, 0.65);
+  color: var(--home-forest-deep);
+}
+
+.home-nav .home-nav-cta {
+  padding: 11px 18px;
+  border-color: var(--home-forest);
+  background: var(--home-forest);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(36, 78, 70, 0.13);
+  transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.home-nav .home-nav-cta:hover {
+  transform: translateY(-2px);
+  background: var(--home-forest-deep);
+  box-shadow: 0 11px 22px rgba(36, 78, 70, 0.2);
+}
+
+.home-hero {
+  min-height: 630px;
+  grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
+  gap: 48px;
+}
+
+.home-hero-copy {
+  padding: 62px 0 78px;
+}
+
+.home-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #66836f;
+  font-size: 0.7rem;
+  letter-spacing: 0.17em;
+}
+
+.home-eyebrow::before {
+  width: 24px;
+  height: 1px;
+  background: #c88965;
+  content: "";
+}
+
+.home-hero h1 {
+  max-width: 610px;
+  color: #203b34;
+  font-size: clamp(3.2rem, 5.4vw, 5.45rem);
+  line-height: 1.01;
+  letter-spacing: -0.073em;
+}
+
+.home-hero h1 span {
+  color: #66836f;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 500;
+  font-style: italic;
+  letter-spacing: -0.075em;
+}
+
+.home-lead {
+  max-width: 480px;
+  margin: 24px 0 30px;
+  color: #687970;
+  font-size: 1.02rem;
+  line-height: 1.8;
+}
+
+.home-actions {
+  gap: 13px;
+}
+
+.home-primary-action,
+.home-secondary-action {
+  min-height: 52px;
+  padding-inline: 23px;
+}
+
+.home-primary-action {
+  background: var(--home-forest);
+  box-shadow: 0 11px 22px rgba(36, 78, 70, 0.18);
+}
+
+.home-primary-action:hover {
+  transform: translateY(-2px);
+  background: var(--home-forest-deep);
+  box-shadow: 0 14px 26px rgba(36, 78, 70, 0.23);
+}
+
+.home-secondary-action {
+  border-color: rgba(36, 78, 70, 0.18);
+  background: rgba(255, 255, 255, 0.48);
+  color: var(--home-forest);
+}
+
+.home-secondary-action:hover {
+  border-color: rgba(36, 78, 70, 0.36);
+  background: #fff;
+}
+
+.home-trust {
+  margin-top: 34px;
+}
+
+.home-trust p {
+  color: #718078;
+}
+
+.home-trust strong {
+  color: #38564a;
+}
+
+.home-avatar-stack span {
+  border-color: var(--home-cream);
+  background: #dae8dd;
+  color: #426854;
+}
+
+.home-avatar-stack span:nth-child(2) {
+  background: #f0dfd2;
+  color: #8d624c;
+}
+
+.home-avatar-stack span:nth-child(3) {
+  background: #e7e2cc;
+  color: #737348;
+}
+
+.home-hero-visual {
+  width: 100%;
+  height: min(535px, 44vw);
+  min-height: 430px;
+  align-self: center;
+  overflow: hidden;
+  border: 1px solid rgba(36, 78, 70, 0.08);
+  border-radius: 47% 47% 28px 28px;
+  background:
+    radial-gradient(circle at 73% 20%, rgba(255, 255, 255, 0.8) 0 2px, transparent 3px),
+    radial-gradient(circle at 16% 36%, rgba(255, 255, 255, 0.75) 0 3px, transparent 4px),
+    linear-gradient(155deg, #e8eee1 2%, #d7e5d8 55%, #eadbc9 100%);
+  box-shadow: 0 28px 70px rgba(46, 77, 62, 0.11);
+}
+
+.home-hero-visual::before,
+.home-hero-visual::after {
+  position: absolute;
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+.home-hero-visual::before {
+  width: 340px;
+  height: 340px;
+  top: 72px;
+  left: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  transform: translateX(-50%);
+}
+
+.home-hero-visual::after {
+  width: 255px;
+  height: 255px;
+  top: 116px;
+  left: 50%;
+  border: 1px dashed rgba(36, 78, 70, 0.17);
+  transform: translateX(-50%);
+}
+
+.home-visual-orbit {
+  position: absolute;
+  z-index: 0;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.orbit-one {
+  width: 380px;
+  height: 380px;
+  top: 70px;
+  right: -80px;
+}
+
+.orbit-two {
+  width: 210px;
+  height: 210px;
+  bottom: -55px;
+  left: -55px;
+  border-color: rgba(36, 78, 70, 0.13);
+}
+
+.home-doctor-portrait {
+  position: absolute;
+  z-index: 1;
+  right: 12%;
+  bottom: 0;
+  left: 12%;
+  height: 86%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.portrait-circle {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.portrait-circle-one {
+  width: 248px;
+  height: 248px;
+  top: 17%;
+  left: 50%;
+  background: rgba(255, 255, 255, 0.37);
+  transform: translateX(-50%);
+}
+
+.portrait-circle-two {
+  width: 34px;
+  height: 34px;
+  top: 21%;
+  right: 8%;
+  background: #d69a72;
+  box-shadow: 0 0 0 9px rgba(255, 255, 255, 0.3);
+}
+
+.portrait-doctor {
+  position: relative;
+  z-index: 2;
+  width: 245px;
+  height: 335px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.portrait-head {
+  width: 106px;
+  height: 126px;
+  position: absolute;
+  z-index: 2;
+  top: 25px;
+  border: 5px solid #553d34;
+  border-bottom: 0;
+  border-radius: 49% 49% 44% 44%;
+  background: #bd8063;
+  box-shadow: inset 0 23px 0 -7px #553d34;
+}
+
+.portrait-head::before,
+.portrait-head::after {
+  position: absolute;
+  top: 73px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #543c34;
+  content: "";
+}
+
+.portrait-head::before {
+  left: 26px;
+}
+
+.portrait-head::after {
+  right: 26px;
+}
+
+.portrait-coat {
+  width: 226px;
+  height: 204px;
+  position: relative;
+  z-index: 1;
+  border: 4px solid #f8f5ed;
+  border-bottom: 0;
+  border-radius: 46% 46% 0 0;
+  background: #fffdf8;
+  box-shadow: inset 0 -14px 0 rgba(220, 235, 225, 0.5);
+}
+
+.portrait-coat::before,
+.portrait-coat::after {
+  width: 0;
+  height: 0;
+  position: absolute;
+  top: 0;
+  border-top: 46px solid #d5e4d8;
+  content: "";
+}
+
+.portrait-coat::before {
+  left: 50%;
+  border-right: 35px solid transparent;
+}
+
+.portrait-coat::after {
+  right: 50%;
+  border-left: 35px solid transparent;
+}
+
+.portrait-cross {
+  width: 29px;
+  height: 29px;
+  position: absolute;
+  top: 65px;
+  left: 31px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #e3eee5;
+  color: var(--home-forest);
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.home-care-card,
+.home-appointment-card {
+  border-color: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 254, 250, 0.94);
+  box-shadow: 0 16px 38px rgba(41, 66, 52, 0.14);
+}
+
+.home-care-card {
+  top: 104px;
+  left: -16px;
+  padding: 13px 17px 13px 13px;
+  border-radius: 18px;
+}
+
+.home-care-icon {
+  border-radius: 13px;
+  background: #e4eee5;
+  color: var(--home-forest);
+}
+
+.home-care-card span,
+.appointment-card-top,
+.home-appointment-card p {
+  color: #758178;
+}
+
+.home-care-card strong,
+.home-appointment-card > strong {
+  color: #304c40;
+}
+
+.appointment-status {
+  color: #4a7959;
+}
+
+.home-appointment-card {
+  right: -12px;
+  bottom: 42px;
+  width: 224px;
+  padding: 16px;
+  border-radius: 18px;
+}
+
+.home-services {
+  position: relative;
+  padding: 92px max(32px, calc((100% - 1240px) / 2)) 98px;
+  background: #fffefa;
+}
+
+.home-services::before {
+  height: 1px;
+  position: absolute;
+  top: 0;
+  right: max(32px, calc((100% - 1240px) / 2));
+  left: max(32px, calc((100% - 1240px) / 2));
+  background: #e9e9df;
+  content: "";
+}
+
+.home-section-heading h2,
+.home-about h2 {
+  color: #203b34;
+}
+
+.home-section-heading > p {
+  color: #708078;
+}
+
+.home-service-grid {
+  gap: 20px;
+}
+
+.home-service-card {
+  min-height: 250px;
+  padding: 29px;
+  border-color: #e8e9df;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(40, 62, 49, 0.035);
+}
+
+.home-service-card:hover {
+  transform: translateY(-5px);
+  border-color: #cbd9cc;
+  box-shadow: 0 18px 34px rgba(40, 62, 49, 0.09);
+}
+
+.home-service-icon {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 25px;
+  border-radius: 16px 16px 16px 5px;
+  background: #e5eee4;
+  color: var(--home-forest);
+}
+
+.home-service-icon.records {
+  background: #f2e7dc;
+  color: #94674b;
+}
+
+.home-service-icon.lab {
+  background: #e8ebd9;
+  color: #72784d;
+}
+
+.home-service-card h3 {
+  color: #294239;
+}
+
+.home-service-card p {
+  color: #748078;
+}
+
+.home-service-card a {
+  color: var(--home-forest);
+}
+
+.home-about {
+  position: relative;
+  min-height: 248px;
+  margin: 48px auto 62px;
+  padding: 52px 62px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 28px 8px 28px 28px;
+  background:
+    radial-gradient(circle at 93% 20%, rgba(255, 255, 255, 0.1) 0 70px, transparent 71px),
+    linear-gradient(125deg, #315c4d, #24493f);
+  box-shadow: 0 22px 48px rgba(36, 78, 70, 0.14);
+}
+
+.home-about::after {
+  width: 200px;
+  height: 200px;
+  position: absolute;
+  right: -50px;
+  bottom: -112px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  box-shadow: 0 0 0 22px rgba(255, 255, 255, 0.035), 0 0 0 48px rgba(255, 255, 255, 0.025);
+  content: "";
+}
+
+.home-about .home-eyebrow {
+  color: #c6d9c8;
+}
+
+.home-about .home-eyebrow::before {
+  background: #e6b28d;
+}
+
+.home-about h2 {
+  max-width: 720px;
+  color: #fffdf7;
+}
+
+@media (max-width: 900px) {
+  .home-header,
+  .home-hero,
+  .home-about {
+    width: min(100% - 48px, 720px);
+  }
+
+  .home-hero {
+    gap: 12px;
+    padding-top: 16px;
+  }
+
+  .home-hero-copy {
+    padding: 38px 0 24px;
+  }
+
+  .home-hero-visual {
+    width: min(620px, 100%);
+    height: 430px;
+    min-height: 0;
+  }
+
+  .home-services {
+    padding-inline: max(24px, calc((100% - 720px) / 2));
+  }
+}
+
+@media (max-width: 640px) {
+  .home-header,
+  .home-hero,
+  .home-about {
+    width: min(100% - 32px, 480px);
+  }
+
+  .home-header {
+    min-height: 76px;
+    gap: 9px;
+  }
+
+  .home-brand {
+    gap: 9px;
+    font-size: 1.1rem;
+  }
+
+  .home-brand-mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 13px 13px 13px 5px;
+  }
+
+  .home-header-login {
+    margin-left: auto;
+    padding-inline: 12px;
+  }
+
+  .home-nav {
+    margin-left: 0;
+  }
+
+  .home-nav .home-nav-cta {
+    padding: 9px 12px;
+    font-size: 0.78rem;
+  }
+
+  .home-hero {
+    padding-top: 10px;
+  }
+
+  .home-hero-copy {
+    padding: 36px 0 20px;
+  }
+
+  .home-hero h1 {
+    font-size: clamp(2.8rem, 13vw, 4rem);
+  }
+
+  .home-lead {
+    margin: 18px 0 24px;
+    font-size: 0.96rem;
+  }
+
+  .home-hero-visual {
+    height: 370px;
+    border-radius: 46% 46% 18px 18px;
+  }
+
+  .home-hero-visual::before {
+    width: 275px;
+    height: 275px;
+    top: 45px;
+  }
+
+  .home-hero-visual::after {
+    width: 210px;
+    height: 210px;
+    top: 78px;
+  }
+
+  .home-doctor-portrait {
+    right: 5%;
+    left: 5%;
+    height: 87%;
+  }
+
+  .portrait-doctor {
+    transform: scale(0.86);
+    transform-origin: bottom center;
+  }
+
+  .home-care-card {
+    top: 40px;
+    left: 4px;
+  }
+
+  .home-appointment-card {
+    right: 4px;
+    bottom: 16px;
+    width: 196px;
+  }
+
+  .home-services {
+    padding: 62px 16px 70px;
+  }
+
+  .home-service-card {
+    min-height: 0;
+    padding: 24px;
+    border-radius: 17px;
+  }
+
+  .home-service-icon {
+    margin-bottom: 20px;
+  }
+
+  .home-about {
+    min-height: 0;
+    margin: 28px auto 38px;
+    padding: 32px 26px;
+    border-radius: 22px 7px 22px 22px;
+  }
+
+  .home-about h2 {
+    font-size: clamp(1.85rem, 8vw, 2.5rem);
+  }
+}
+
+@media (max-width: 380px) {
+  .home-header {
+    gap: 6px;
+  }
+
+  .home-brand {
+    font-size: 1rem;
+  }
+
+  .home-header-login {
+    min-height: 34px;
+    margin-left: auto;
+    padding: 6px 9px;
+    font-size: 0.75rem;
+  }
+
+  .home-nav .home-nav-cta {
+    padding: 8px 9px;
+    font-size: 0.73rem;
+  }
+
+  .home-hero-visual {
+    height: 340px;
+  }
+}
+
+/* Keep the welcome page graphic-free: use a simple panel for the care details. */
+.home-hero-visual {
+  height: auto;
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  overflow: hidden;
+  padding: clamp(24px, 5vw, 56px);
+  border-radius: 24px;
+  background: #eaf0e8;
+  box-shadow: none;
+}
+
+.home-hero-visual::before,
+.home-hero-visual::after,
+.home-visual-orbit,
+.home-doctor-portrait {
+  display: none;
+}
+
+.home-care-card,
+.home-appointment-card {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  max-width: 380px;
+  margin-inline: auto;
+  border: 1px solid #e4e9e1;
+  border-radius: 16px;
+  background: #fffefa;
+  box-shadow: 0 8px 20px rgba(41, 66, 52, 0.06);
+}
+
+.home-appointment-card {
+  padding: 18px;
+}
+
+@media (max-width: 640px) {
+  .home-hero-visual {
+    min-height: 300px;
+    padding: 22px;
+    border-radius: 20px;
+  }
+}
+
+@media (max-width: 380px) {
+  .home-hero-visual {
+    min-height: 280px;
+    height: auto;
+  }
+}
