@@ -12,8 +12,20 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
 
-    doctor = db.relationship('Doctor', back_populates='user', lazy=True, uselist=False)
-    patient = db.relationship('Patient', back_populates='user', lazy=True, uselist=False)
+    doctor = db.relationship(
+        'Doctor',
+        back_populates='user',
+        lazy=True,
+        uselist=False,
+        cascade='all, delete-orphan',
+    )
+    patient = db.relationship(
+        'Patient',
+        back_populates='user',
+        lazy=True,
+        uselist=False,
+        cascade='all, delete-orphan',
+    )
     payments = db.relationship('Payment', back_populates='user', lazy=True, foreign_keys='Payment.user_id')
     notifications = db.relationship('Notification', back_populates='user', lazy=True)
 

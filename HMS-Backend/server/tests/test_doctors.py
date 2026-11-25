@@ -76,3 +76,230 @@ def test_doctor_relationships(app):
         assert doctor.user == user
         assert doctor.speciality == speciality
         assert doctor.speciality.name == "Neurology"
+
+
+def test_admin_can_link_existing_doctor_account_to_profile(
+    app, client, make_user, token_for
+):
+    admin, _ = make_user("admin", username="doctor-profile-admin")
+    with app.app_context():
+        existing_user = User(
+            username="existing-doctor",
+            email="existing-doctor@example.com",
+            role="doctor",
+        )
+        existing_user.password = "Test-password-123"
+        speciality = Speciality(name="Family Medicine")
+        db.session.add_all([existing_user, speciality])
+        db.session.commit()
+        existing_user_id = existing_user.id
+        speciality_id = speciality.id
+
+    response = client.post(
+        "/api/doctors",
+        headers={"Authorization": f"Bearer {token_for(admin)}"},
+        json={
+            "username": "existing-doctor",
+            "speciality_id": speciality_id,
+        },
+    )
+
+    assert response.status_code == 201
+    doctor_data = response.get_json()
+    assert doctor_data["user_id"] == existing_user_id
+    assert doctor_data["doctor_id"] is not None
+    assert doctor_data["speciality_id"] == speciality_id
+
+
+def test_admin_can_list_specialities(client, make_user, token_for):
+    admin, _ = make_user("admin", username="speciality-list-admin")
+    db.session.add(
+        Speciality(
+            name="Ophthalmology",
+            description="Eye care",
+        )
+    )
+    db.session.commit()
+
+    response = client.get(
+        "/api/specialities",
+        headers={"Authorization": f"Bearer {token_for(admin)}"},
+    )
+
+    assert response.status_code == 200
+    speciality = next(
+        item
+        for item in response.get_json()
+        if item["name"] == "Ophthalmology"
+    )
+    assert speciality["id"] is not None
+    assert speciality["description"] == "Eye care"
+
+
+def test_admin_can_create_speciality(client, make_user, token_for):
+    admin, _ = make_user("admin", username="speciality-create-admin")
+
+    response = client.post(
+        "/api/specialities",
+        headers={"Authorization": f"Bearer {token_for(admin)}"},
+        json={
+            "name": "  Oncology  ",
+            "description": "Cancer diagnosis and treatment",
+        },
+    )
+
+    assert response.status_code == 201
+    speciality_data = response.get_json()
+    assert speciality_data["id"] is not None
+    assert speciality_data["name"] == "Oncology"
+    assert speciality_data["description"] == "Cancer diagnosis and treatment"
+
+
+def test_speciality_creation_rejects_duplicate_name(client, make_user, token_for):
+    admin, _ = make_user("admin", username="speciality-duplicate-admin")
+    db.session.add(Speciality(name="Oncology"))
+    db.session.commit()
+
+    response = client.post(
+        "/api/specialities",
+        headers={"Authorization": f"Bearer {token_for(admin)}"},
+        json={"name": " oncology "},
+    )
+
+    assert response.status_code == 409
+
+
+def test_speciality_creation_requires_admin(client, make_user, token_for):
+    doctor, _ = make_user("doctor", username="speciality-create-doctor")
+
+    response = client.post(
+        "/api/specialities",
+        headers={"Authorization": f"Bearer {token_for(doctor)}"},
+        json={"name": "Oncology"},
+    )
+
+    assert response.status_code == 403
+
+
+def test_speciality_list_requires_admin(client, make_user, token_for):
+    doctor, _ = make_user("doctor", username="speciality-list-doctor")
+
+    response = client.get(
+        "/api/specialities",
+        headers={"Authorization": f"Bearer {token_for(doctor)}"},
+    )
+
+    assert response.status_code == 403
+
+
+def test_admin_can_change_doctor_speciality(client, make_user, token_for):
+    admin, _ = make_user("admin", username="change-speciality-admin")
+    doctor, _ = make_user("doctor", username="change-speciality-doctor")
+    old_speciality = doctor.doctor.speciality
+    new_speciality = Speciality(name="Cardiology")
+    db.session.add(new_speciality)
+    db.session.commit()
+
+    response = client.patch(
+        f"/api/doctors/{doctor.id}",
+        headers={"Authorization": f"Bearer {token_for(admin)}"},
+        json={"speciality_id": new_speciality.id},
+    )
+
+    assert response.status_code == 200
+    updated = response.get_json()
+    assert old_speciality.id != new_speciality.id
+    assert updated["speciality_id"] == new_speciality.id
+    assert updated["speciality"] == "Cardiology"
+
+
+def test_new_doctor_gets_default_password_and_is_required_to_change_it(
+    client, make_user, token_for
+):
+    admin, _ = make_user("admin", username="doctor-password-admin")
+    speciality = Speciality(name="General Medicine")
+    db.session.add(speciality)
+    db.session.commit()
+
+    response = client.post(
+        "/api/doctors",
+        headers={"Authorization": f"Bearer {token_for(admin)}"},
+        json={
+            "username": "new-doctor-no-password",
+            "speciality_id": speciality.id,
+        },
+    )
+
+    assert response.status_code == 201
+    created = response.get_json()
+    initial_password = "doctor@new-doctor-no-password"
+    assert created["initial_password"] == initial_password
+
+    login = client.post(
+        "/api/auth/login",
+        json={
+            "username": "new-doctor-no-password",
+            "password": initial_password,
+        },
+    )
+    assert login.status_code == 200
+    login_data = login.get_json()
+    assert login_data["must_change_password"] is True
+
+    headers = {"Authorization": f"Bearer {login_data['access_token']}"}
+    protected = client.get("/api/doctors", headers=headers)
+    assert protected.status_code == 403
+
+    changed = client.post(
+        "/api/auth/change-password",
+        headers=headers,
+        json={
+            "current_password": initial_password,
+            "new_password": "Doctor-safe-pass-2026",
+        },
+    )
+    assert changed.status_code == 200
+    changed_data = changed.get_json()
+    assert changed_data["must_change_password"] is False
+
+    updated_headers = {
+        "Authorization": f"Bearer {changed_data['access_token']}"
+    }
+    assert client.get("/api/doctors", headers=updated_headers).status_code == 200
+
+
+def test_doctor_list_includes_clinical_profile_id(client, make_user, token_for):
+    admin, _ = make_user("admin", username="doctor-list-admin")
+    doctor, _ = make_user("doctor", username="doctor-list-entry")
+    doctor_profile_id = doctor.doctor.id
+
+    response = client.get(
+        "/api/doctors",
+        headers={"Authorization": f"Bearer {token_for(admin)}"},
+    )
+
+    assert response.status_code == 200
+    listed_doctor = next(
+        item for item in response.get_json() if item["user_id"] == doctor.id
+    )
+    assert listed_doctor["doctor_id"] == doctor_profile_id
+
+
+def test_admin_can_delete_doctor_without_linked_records(
+    app, client, make_user, token_for
+):
+    admin, _ = make_user("admin", username="delete-doctor-admin")
+    doctor_user, _ = make_user("doctor", username="delete-doctor-user")
+    assert doctor_user.doctor is not None
+    doctor_profile_id = doctor_user.doctor.id
+    headers = {"Authorization": f"Bearer {token_for(admin)}"}
+
+    response = client.delete(
+        f"/api/doctors/{doctor_user.id}",
+        headers=headers,
+    )
+
+    assert response.status_code == 204
+    with app.app_context():
+        assert db.session.get(User, doctor_user.id) is None
+        assert db.session.get(Doctor, doctor_profile_id) is None

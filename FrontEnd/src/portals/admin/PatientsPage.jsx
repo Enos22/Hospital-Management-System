@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { getApiErrorMessage } from '../../lib/api/errors';
-import { getApiUrl } from '../../lib/api/client';
+import { getApiUrl, getToken } from '../../lib/api/client';
+import DetailList from '../../components/feedback/DetailList';
 
 async function apiRequest(path, options = {}) {
-  const token = sessionStorage.getItem('access_token');
+  const token = getToken();
 
   const response = await fetch(getApiUrl(path), {
     ...options,
@@ -91,6 +92,11 @@ export default function PatientsPage() {
       username: form.get('username').trim(),
       email: form.get('email').trim(),
       password: form.get('password'),
+      name: form.get('name').trim(),
+      age: Number(form.get('age')),
+      gender: form.get('gender'),
+      phone_number: form.get('phone_number').trim(),
+      address: form.get('address').trim(),
     };
 
     setError('');
@@ -141,9 +147,10 @@ export default function PatientsPage() {
 
     const form = new FormData(event.currentTarget);
     const username = form.get('username').trim();
+    const name = form.get('name').trim();
 
-    if (!username) {
-      setError('Enter a username.');
+    if (!username || !name) {
+      setError('Enter a username and full name.');
       return;
     }
 
@@ -153,7 +160,14 @@ export default function PatientsPage() {
     try {
       await apiRequest(`/api/patients/${id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ username }),
+        body: JSON.stringify({
+          username,
+          name,
+          age: Number(form.get('age')),
+          gender: form.get('gender'),
+          phone_number: form.get('phone_number').trim(),
+          address: form.get('address').trim(),
+        }),
       });
 
       setEditingPatient(null);
@@ -246,6 +260,36 @@ export default function PatientsPage() {
             <input name="password" type="password" required />
           </label>
 
+          <label>
+            Full name
+            <input name="name" required maxLength={100} />
+          </label>
+
+          <label>
+            Age
+            <input name="age" type="number" min="1" required />
+          </label>
+
+          <label>
+            Gender
+            <select name="gender" required defaultValue="">
+              <option value="" disabled>Select gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
+
+          <label>
+            Phone number
+            <input name="phone_number" type="tel" maxLength={15} />
+          </label>
+
+          <label>
+            Address
+            <textarea name="address" maxLength={200} />
+          </label>
+
           <button type="submit">Save patient</button>
         </form>
       )}
@@ -311,6 +355,60 @@ export default function PatientsPage() {
             />
           </label>
 
+          <label>
+            Full name
+            <input
+              name="name"
+              defaultValue={editingPatient.name ?? ''}
+              maxLength={100}
+              required
+            />
+          </label>
+
+          <label>
+            Age
+            <input
+              name="age"
+              type="number"
+              min="1"
+              defaultValue={editingPatient.age ?? ''}
+              required
+            />
+          </label>
+
+          <label>
+            Gender
+            <select
+              name="gender"
+              defaultValue={editingPatient.gender ?? ''}
+              required
+            >
+              <option value="" disabled>Select gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
+
+          <label>
+            Phone number
+            <input
+              name="phone_number"
+              type="tel"
+              maxLength={15}
+              defaultValue={editingPatient.phone_number ?? ''}
+            />
+          </label>
+
+          <label>
+            Address
+            <textarea
+              name="address"
+              maxLength={200}
+              defaultValue={editingPatient.address ?? ''}
+            />
+          </label>
+
           <button type="submit">Save changes</button>
           <button type="button" onClick={() => setEditingPatient(null)}>
             Close
@@ -321,7 +419,7 @@ export default function PatientsPage() {
       {patientDetails && (
         <section>
           <h2>Patient details</h2>
-          <pre>{JSON.stringify(patientDetails, null, 2)}</pre>
+          <DetailList data={patientDetails} />
           <button type="button" onClick={() => setPatientDetails(null)}>
             Close details
           </button>

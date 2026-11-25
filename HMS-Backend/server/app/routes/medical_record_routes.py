@@ -2,7 +2,9 @@ from flask import request
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 from flask_restful import Resource
 
+from app.extensions import db
 from app.models.patient import Patient
+from app.services.notification_service import create_notification
 from app.schemas.medical_record_schema import (
     medical_record_schema,
     medical_records_schema,
@@ -70,6 +72,13 @@ class MedicalRecordList(Resource):
 
         validated_data = medical_record_schema.load(data)
         record = RecordService.create_record(validated_data)
+
+        patient = db.session.get(Patient, record.patient_id)
+        if patient is not None:
+            create_notification(
+                user_id=patient.user_id,
+                message=f"New medical record added: {record.diagnosis}",
+            )
 
         return {
             "message": "Medical record created successfully",

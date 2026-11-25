@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import AuthForm from "../features/auth/components/AuthForm.jsx";
+import {AuthForm} from "../features/auth/components/AuthForm.jsx";
 import { useSignup } from "../features/auth/hooks/useAuth.js";
 import { getLandingForRole, ROUTES } from "../app/navigation/routePaths.js";
 

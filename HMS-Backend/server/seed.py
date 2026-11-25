@@ -20,7 +20,11 @@ from app.models import (
 )
 from datetime import date, datetime, time, timedelta
 
-app = create_app()
+app = None
+
+
+def get_seed_app():
+    return app or create_app()
 
 SEED_USERS = [
     {
@@ -57,7 +61,7 @@ SEED_USERS = [
 
 
 def seed_data():
-    with app.app_context():
+    with get_seed_app().app_context():
         users_created = 0
         for data in SEED_USERS:
             existing_user = User.query.filter(
@@ -1076,7 +1080,7 @@ def seed_patients():
 
 
 def seed_database():
-    with app.app_context():
+    with get_seed_app().app_context():
         try:
             db.create_all()
             seed_users()
@@ -1103,4 +1107,20 @@ def seed_database():
 
 
 if __name__ == "__main__":
-    seed_database()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "target",
+        choices=("all", "specialties"),
+        nargs="?",
+        default="all",
+    )
+    args = parser.parse_args()
+
+    if args.target == "specialties":
+        with get_seed_app().app_context():
+            db.create_all()
+            seed_specialties()
+    else:
+        seed_database()

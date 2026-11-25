@@ -2,19 +2,7 @@
  * TODO: Present the patient's laboratory tests and results.
  */
 import { useLaboratoryTests } from "../../features/laboratory/hooks/useLaboratoryTests";
-
-function formatDate(value) {
-  if (!value) return "Date unavailable";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Date unavailable";
-
-  return date.toLocaleDateString("en-KE", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
+import { formatDate } from "../../lib/format/FormatDate.js";
 
 export default function LaboratoryPage() {
   const { tests, laboratoryTests, loading, error } = useLaboratoryTests();
@@ -31,7 +19,7 @@ export default function LaboratoryPage() {
 
       {error && (
         <p className="error-message" role="alert">
-          {error}
+          {error.message || String(error)}
         </p>
       )}
 

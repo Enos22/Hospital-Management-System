@@ -1,23 +1,12 @@
-/*
- * TODO: Present prescriptions belonging to the signed-in patient.
- */
 import { usePrescriptions } from "../../features/prescriptions/hooks/usePrescriptions";
-
-function formatDate(value) {
-  if (!value) return "Date unavailable";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Date unavailable";
-
-  return date.toLocaleDateString("en-KE", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
+import { formatDate } from "../../lib/format/FormatDate.js";
 
 export default function PrescriptionsPage() {
-  const { prescriptions = [], loading, error } = usePrescriptions();
+  const {
+    prescriptions = [],
+    loading,
+    error,
+  } = usePrescriptions();
 
   return (
     <main className="patient-page">
@@ -34,36 +23,41 @@ export default function PrescriptionsPage() {
         </p>
       )}
 
-      {!loading && prescriptions.length === 0 && (
+      {!loading && !error && prescriptions.length === 0 && (
         <p>You currently have no prescriptions.</p>
       )}
 
-      <section className="prescription-list">
-        {prescriptions.map((prescription) => (
-          <article className="prescription-card" key={prescription.id}>
-            <h2>Medicine #{prescription.medicine_id || "Not specified"}</h2>
+      {!loading && !error && (
+        <section className="prescription-list">
+          {prescriptions.map((prescription) => (
+            <article className="prescription-card" key={prescription.id}>
+              <h2>
+                {prescription.medicine_name || "Medicine not specified"}
+              </h2>
 
-            <p>
-              <strong>Dosage:</strong> {prescription.dosage || "Not provided"}
-            </p>
+              <p>
+                <strong>Dosage:</strong>{" "}
+                {prescription.dosage || "Not provided"}
+              </p>
 
-            <p>
-              <strong>Frequency:</strong>{" "}
-              {prescription.frequency || "Not provided"}
-            </p>
+              <p>
+                <strong>Frequency:</strong>{" "}
+                {prescription.frequency || "Not provided"}
+              </p>
 
-            <p>
-              <strong>Duration:</strong>{" "}
-              {prescription.duration || "Not provided"}
-            </p>
+              <p>
+                <strong>Duration:</strong>{" "}
+                {prescription.duration || "Not provided"}
+              </p>
 
-            <p>
-              <strong>Date issued:</strong>{" "}
-              {formatDate(prescription.created_at)}
-            </p>
-          </article>
-        ))}
-      </section>
+              <p>
+                <strong>Date issued:</strong>{" "}
+                {formatDate(prescription.created_at)}
+              </p>
+            </article>
+          ))}
+        </section>
+      )}
     </main>
   );
 }

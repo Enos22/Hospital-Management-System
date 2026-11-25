@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { getApiErrorMessage } from '../../lib/api/errors';
-import { getApiUrl } from '../../lib/api/client';
+import { getApiUrl, getToken } from '../../lib/api/client';
+import DetailList from '../../components/feedback/DetailList';
+import { formatDate, formatTime } from '../../lib/format/FormatDate.js';
 
 async function apiRequest(path, options = {}) {
-  const token = sessionStorage.getItem('access_token');
+  const token = getToken();
   const headers = {
     Accept: 'application/json',
     ...(options.body ? { 'Content-Type': 'application/json' } : {}),
@@ -272,8 +274,8 @@ export default function AppointmentsPage() {
                       appointment.doctor_id ??
                       '—'}
                   </td>
-                  <td>{getDate(appointment) || '—'}</td>
-                  <td>{getTime(appointment) || '—'}</td>
+                  <td>{getDate(appointment) ? formatDate(getDate(appointment)) : '—'}</td>
+                  <td>{getTime(appointment) ? formatTime(getTime(appointment)) : '—'}</td>
                   <td>{appointment.status ?? '—'}</td>
                   <td>
                     <button type="button" onClick={() => handleView(id)}>
@@ -338,7 +340,7 @@ export default function AppointmentsPage() {
           </form>
 
           <h3>Appointment details</h3>
-          <pre>{JSON.stringify(selectedAppointment, null, 2)}</pre>
+          <DetailList data={selectedAppointment} />
         </section>
       )}
     </section>

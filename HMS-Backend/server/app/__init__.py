@@ -2,12 +2,20 @@ from flask import Flask, jsonify
 from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from flask_jwt_extended.exceptions import JWTExtendedException
 from flask_restful import Api
 
 from app.extensions import db, bcrypt
 
 migrate = Migrate()
 jwt = JWTManager()
+
+
+class JWTApi(Api):
+    def handle_error(self, error):
+        if isinstance(error, JWTExtendedException):
+            return jsonify({"msg": str(error)}), 401
+        return super().handle_error(error)
 
 
 def create_app(test_config=None):
@@ -29,19 +37,29 @@ def create_app(test_config=None):
 
     CORS(
         app,
+        resources={
+            r"/api/*": {
+                "origins": [
+                    "http://localhost:3000",
+                    "http://localhost:4173",
+                    "http://localhost:5173",
+                    "http://localhost:5555",
+                    "http://127.0.0.1:3000",
+                    "http://127.0.0.1:4173",
+                    "http://127.0.0.1:5173",
+                    "http://127.0.0.1:5555",
+
+                    # Production frontend
+                    "https://hospital-management-system-ten-red.vercel.app",
+
+                    # Other existing deployment
+                    "https://hospital-management-system-rom765i9s-afyacare.vercel.app",
+                ]
+            }
+        },
         supports_credentials=True,
-        origins=[
-            "http://localhost:3000",
-            "http://localhost:4173",
-            "http://localhost:5173",
-            "http://localhost:5555",
-            "http://127.0.0.1:3000",
-            "http://127.0.0.1:4173",
-            "http://127.0.0.1:5173",
-            "http://127.0.0.1:5555",
-            "https://hospital-management-system-rom765i9s-afyacare.vercel.app",
-            "https://*.vercel.app",
-        ],
+        allow_headers=["Content-Type", "Authorization"],
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     )
 
     from app import models
@@ -57,7 +75,7 @@ def create_app(test_config=None):
     def home():
         return jsonify({"message": "AfyaCare backend is running"}), 200
 
-    api = Api(app)
+    api = JWTApi(app)
 
     from app.routes.admin_routes import (
         AdminDashboard,
@@ -67,7 +85,7 @@ def create_app(test_config=None):
     from app.routes.appointment_routes import appointment_bp
     from app.routes.auth_routes import Checksession, Login, Logout, Signup
     from app.routes.billing_routes import billing_bp
-    from app.routes.doctor_routes import DoctorDetail, DoctorList
+    from app.routes.doctor_routes import DoctorDetail, DoctorList, SpecialityList
     from app.routes.laboratory_routes import LaboratoryTestDetail, LaboratoryTestList
     from app.routes.medical_record_routes import (
         MedicalRecordDetail,
@@ -88,6 +106,7 @@ def create_app(test_config=None):
     api.add_resource(AdminUserDetail, "/api/admin/users/<int:id>")
     api.add_resource(DoctorList, "/api/doctors")
     api.add_resource(DoctorDetail, "/api/doctors/<int:id>")
+    api.add_resource(SpecialityList, "/api/specialities")
     api.add_resource(PatientList, "/api/patients")
     api.add_resource(PatientDetail, "/api/patients/<int:id>")
     api.add_resource(MedicineList, "/api/pharmacy/medicines")
@@ -106,5 +125,9 @@ def create_app(test_config=None):
     app.register_blueprint(appointment_bp)
     app.register_blueprint(billing_bp)
     app.register_blueprint(notification_bp)
+
+    from app.openapi import register_openapi
+
+    register_openapi(app)
 
     return app

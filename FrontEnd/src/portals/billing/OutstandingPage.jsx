@@ -1,3 +1,1 @@
-/*
- * TODO: Present the staff outstanding-invoice report.
- */
+export { default } from "../../features/billing/OutstandingPage";

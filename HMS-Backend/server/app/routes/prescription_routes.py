@@ -42,6 +42,7 @@ class PrescriptionList(Resource):
                     "patient_id": prescription.patient_id,
                     "doctor_id": prescription.doctor_id,
                     "medicine_id": prescription.medicine_id,
+                    "medicine_name": prescription.medicine.name if prescription.medicine else None,
                     "dosage": prescription.dosage,
                     "frequency": prescription.frequency,
                     "duration": prescription.duration,
@@ -99,6 +100,7 @@ class PrescriptionList(Resource):
                 "patient_id": prescription.patient_id,
                 "doctor_id": prescription.doctor_id,
                 "medicine_id": prescription.medicine_id,
+                "medicine_name": prescription.medicine.name if prescription.medicine else None,
                 "dosage": prescription.dosage,
                 "frequency": prescription.frequency,
                 "duration": prescription.duration
@@ -127,6 +129,7 @@ class PrescriptionDetail(Resource):
                 "patient_id": prescription.patient_id,
                 "doctor_id": prescription.doctor_id,
                 "medicine_id": prescription.medicine_id,
+                "medicine_name": prescription.medicine.name if prescription.medicine else None,
                 "dosage": prescription.dosage,
                 "frequency": prescription.frequency,
                 "duration": prescription.duration
@@ -180,6 +183,7 @@ class PrescriptionDetail(Resource):
                 "patient_id": prescription.patient_id,
                 "doctor_id": prescription.doctor_id,
                 "medicine_id": prescription.medicine_id,
+                "medicine_name": prescription.medicine.name if prescription.medicine else None,
                 "dosage": prescription.dosage,
                 "frequency": prescription.frequency,
                 "duration": prescription.duration

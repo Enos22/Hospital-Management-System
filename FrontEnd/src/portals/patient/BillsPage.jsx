@@ -2,19 +2,7 @@
  * TODO: Present the signed-in patient's invoices and billing data.
  */
 import { useBilling } from "../../features/billing/hooks/useBilling";
-
-function formatDate(value) {
-  if (!value) return "Date unavailable";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Date unavailable";
-
-  return date.toLocaleDateString("en-KE", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
+import { formatDate } from "../../lib/format/FormatDate.js";
 
 function formatAmount(value) {
   if (value === null || value === undefined || value === "") {

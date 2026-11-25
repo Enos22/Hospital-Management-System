@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { getApiErrorMessage } from '../../lib/api/errors';
-import { getApiUrl } from '../../lib/api/client';
+import { getApiUrl, getToken } from '../../lib/api/client';
+import DetailList from '../../components/feedback/DetailList';
 
 async function apiRequest(path, options = {}) {
-  const token = sessionStorage.getItem('access_token');
+  const token = getToken();
 
   const response = await fetch(getApiUrl(path), {
     ...options,
@@ -41,12 +42,15 @@ function getDoctorId(doctor) {
 
 export default function DoctorsPage() {
   const [doctors, setDoctors] = useState([]);
+  const [specialities, setSpecialities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [specialitiesLoading, setSpecialitiesLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showSpecialityForm, setShowSpecialityForm] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState(null);
   const [doctorDetails, setDoctorDetails] = useState(null);
 
@@ -78,6 +82,31 @@ export default function DoctorsPage() {
     return () => controller.abort();
   }, [refreshKey]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadSpecialities() {
+      try {
+        setSpecialitiesLoading(true);
+        const response = await apiRequest('/api/specialities', {
+          signal: controller.signal,
+        });
+        setSpecialities(Array.isArray(response) ? response : []);
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          setError(err.message || 'Could not load specialities.');
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setSpecialitiesLoading(false);
+        }
+      }
+    }
+
+    loadSpecialities();
+    return () => controller.abort();
+  }, []);
+
   async function handleAddDoctor(event) {
     event.preventDefault();
     const formElement = event.currentTarget;
@@ -86,7 +115,8 @@ export default function DoctorsPage() {
     const newDoctor = {
       username: form.get('username').trim(),
       speciality_id: Number(form.get('speciality_id')),
-      password: form.get('password'),
+      ...(form.get('email').trim() && { email: form.get('email').trim() }),
+      ...(form.get('password') && { password: form.get('password') }),
     };
 
     setError('');
@@ -104,6 +134,32 @@ export default function DoctorsPage() {
       setRefreshKey((value) => value + 1);
     } catch (err) {
       setError(err.message || 'Could not add doctor.');
+    }
+  }
+
+  async function handleAddSpeciality(event) {
+    event.preventDefault();
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    const name = form.get('speciality_name').trim();
+    const description = form.get('speciality_description').trim();
+
+    setError('');
+    setMessage('');
+
+    try {
+      const speciality = await apiRequest('/api/specialities', {
+        method: 'POST',
+        body: JSON.stringify({ name, description }),
+      });
+      setSpecialities((current) =>
+        [...current, speciality].sort((a, b) => a.name.localeCompare(b.name))
+      );
+      setShowSpecialityForm(false);
+      setMessage(`Speciality "${speciality.name}" added.`);
+      formElement.reset();
+    } catch (err) {
+      setError(err.message || 'Could not add speciality.');
     }
   }
 
@@ -138,13 +194,15 @@ export default function DoctorsPage() {
     const form = new FormData(event.currentTarget);
     const username = form.get('username').trim();
     const email = form.get('email').trim();
+    const specialityId = form.get('speciality_id');
     const updates = {};
 
     if (username) updates.username = username;
     if (email) updates.email = email;
+    if (specialityId) updates.speciality_id = Number(specialityId);
 
     if (Object.keys(updates).length === 0) {
-      setError('Enter a username or email to update.');
+      setError('Enter a username, email, or speciality to update.');
       return;
     }
 
@@ -242,10 +300,35 @@ export default function DoctorsPage() {
       >
         {showCreateForm ? 'Close form' : 'Add doctor'}
       </button>
+      <button
+        type="button"
+        onClick={() => setShowSpecialityForm((visible) => !visible)}
+      >
+        {showSpecialityForm ? 'Close speciality form' : 'Add speciality'}
+      </button>
+
+      {showSpecialityForm && (
+        <form onSubmit={handleAddSpeciality}>
+          <h2>Add speciality</h2>
+          <label>
+            Name
+            <input name="speciality_name" required maxLength={100} />
+          </label>
+          <label>
+            Description
+            <textarea name="speciality_description" />
+          </label>
+          <button type="submit">Save speciality</button>
+        </form>
+      )}
 
       {showCreateForm && (
         <form onSubmit={handleAddDoctor}>
-          <h2>Add doctor</h2>
+          <h2>Create or link doctor profile</h2>
+          <p>
+            Enter the username of an existing doctor account to link it, or
+            provide an email and password to create a new account.
+          </p>
 
           <label>
             Username
@@ -253,16 +336,47 @@ export default function DoctorsPage() {
           </label>
 
           <label>
-            Specialty ID
-            <input name="speciality_id" type="number" min="1" required />
+            Email (required for a new account)
+            <input name="email" type="email" />
           </label>
 
           <label>
-            Password
-            <input name="password" type="password" required />
+            Password (required for a new account)
+            <input name="password" type="password" minLength={8} />
           </label>
 
-          <button type="submit">Save doctor</button>
+          <label>
+            Specialty
+            <select
+              name="speciality_id"
+              required
+              defaultValue=""
+              disabled={specialitiesLoading || specialities.length === 0}
+            >
+              <option value="" disabled>
+                {specialitiesLoading ? 'Loading specialities...' : 'Select specialty'}
+              </option>
+              {specialities.map((speciality) => (
+                <option key={speciality.id} value={speciality.id}>
+                  {speciality.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {specialities.length === 0 && !specialitiesLoading && (
+            <p role="alert">
+              No specialities are available. Run the backend specialty seed
+              before creating or linking a doctor profile.
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={specialitiesLoading || specialities.length === 0}
+          >
+            Save doctor profile
+          </button>
         </form>
       )}
 
@@ -295,7 +409,7 @@ export default function DoctorsPage() {
                   {doctor.specialty ??
                     doctor.speciality ??
                     doctor.speciality_id ??
-                    '—'}
+                    (doctor.doctor_id == null ? 'Profile not linked' : '—')}
                 </td>
                 <td>
                   <button
@@ -344,6 +458,26 @@ export default function DoctorsPage() {
             />
           </label>
 
+          <label>
+            Speciality
+            <select
+              name="speciality_id"
+              defaultValue={editingDoctor.speciality_id ?? ''}
+              disabled={specialitiesLoading || specialities.length === 0}
+            >
+              <option value="" disabled>
+                {specialitiesLoading
+                  ? 'Loading specialities...'
+                  : 'Select speciality'}
+              </option>
+              {specialities.map((speciality) => (
+                <option key={speciality.id} value={speciality.id}>
+                  {speciality.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
           <button type="submit">Save changes</button>
           <button type="button" onClick={() => setEditingDoctor(null)}>
             Close
@@ -354,7 +488,7 @@ export default function DoctorsPage() {
       {doctorDetails && (
         <section>
           <h2>Doctor details</h2>
-          <pre>{JSON.stringify(doctorDetails, null, 2)}</pre>
+          <DetailList data={doctorDetails} />
           <button type="button" onClick={() => setDoctorDetails(null)}>
             Close details
           </button>
