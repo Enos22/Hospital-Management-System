@@ -23,7 +23,7 @@ The application uses SQLAlchemy models in `HMS-Backend/server/app/models/`. The 
 | `audit_logs` | Action/table/record metadata and actor ID |
 
 The main relationships are:
-
+#
 ```text
 users 1--1 patients
 users 1--1 doctors

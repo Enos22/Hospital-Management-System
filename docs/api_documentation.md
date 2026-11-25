@@ -14,6 +14,7 @@ Base URL for local development: `http://127.0.0.1:5555`. JSON requests use `Cont
 Example signup:
 
 ```json
+#
 {
   "username": "pat-001",
   "email": "pat-001@example.test",
