@@ -6,6 +6,7 @@ import { ROUTES } from "./navigation/routePaths";
 import {RequireAuth, RequireRole} from "../lib/auth/guards.jsx";
 import LoginPage from "../pages/LoginPage.jsx";
 import SignupPage from "../pages/SignupPage.jsx";
+import HomePage from "../pages/HomePage.jsx";
 import ForbiddenPage from "../pages/ForbiddenPage.jsx";
 import NotFoundPage from "../pages/NotFoundPage.jsx";
 import NotificationsPage from "../pages/NotificationsPage.jsx";
@@ -22,7 +23,7 @@ export default function AppRouter() {
     return (
         <BrowserRouter>
         <Routes>
-            <Route path="/" element={<Navigate to={ROUTES.LOGIN} replace />} />
+            <Route path="/" element={<HomePage />} />
             <Route path={ROUTES.LOGIN} element={<LoginPage />} />
             <Route path={ROUTES.SIGNUP} element={<SignupPage />} />
             <Route path={ROUTES.FORBIDDEN} element={<ForbiddenPage />} />
